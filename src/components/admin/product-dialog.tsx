@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, ChangeEvent } from 'react';
+import { useEffect, useState, ChangeEvent, useId } from 'react';
 import Image from 'next/image';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -42,6 +42,7 @@ const allSizes = ['S', 'M', 'L', 'XL'];
 
 const ImageUrlInput = ({ value, onChange, onRemove }: { value: string; onChange: (value: string) => void; onRemove: () => void }) => {
     const [isUploading, setIsUploading] = useState(false);
+    const uniqueId = useId();
 
     const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -63,15 +64,15 @@ const ImageUrlInput = ({ value, onChange, onRemove }: { value: string; onChange:
 
     return (
         <div className="flex items-center gap-2 group">
-            {value ? (
-                <div className="relative w-24 h-24 rounded-md overflow-hidden border">
+            <div className="relative w-24 h-24 rounded-md overflow-hidden border">
+                {value ? (
                     <Image src={value} alt="Product image preview" fill className="object-cover" />
-                </div>
-            ) : (
-                <div className="w-24 h-24 rounded-md border border-dashed flex items-center justify-center bg-muted">
-                    <span className="text-xs text-muted-foreground">Preview</span>
-                </div>
-            )}
+                ) : (
+                    <div className="w-24 h-24 rounded-md border border-dashed flex items-center justify-center bg-muted">
+                        <span className="text-xs text-muted-foreground">Preview</span>
+                    </div>
+                )}
+            </div>
             <div className="flex-1">
                 <div className="relative">
                     <Input 
@@ -81,9 +82,9 @@ const ImageUrlInput = ({ value, onChange, onRemove }: { value: string; onChange:
                         disabled={isUploading}
                         className="pr-10"
                     />
-                    <label htmlFor={`file-upload-${Math.random()}`} className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center cursor-pointer text-muted-foreground hover:text-primary">
+                    <label htmlFor={uniqueId} className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center cursor-pointer text-muted-foreground hover:text-primary">
                         <Upload className="h-4 w-4" />
-                        <input id={`file-upload-${Math.random()}`} type="file" className="sr-only" onChange={handleFileChange} accept="image/*" />
+                        <input id={uniqueId} type="file" className="sr-only" onChange={handleFileChange} accept="image/*" />
                     </label>
                 </div>
             </div>
