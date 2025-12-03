@@ -1,8 +1,9 @@
+
 'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,33 +17,41 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const auth = useAuth();
   const { toast } = useToast();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!auth) return;
+
     setIsLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      toast({
-        title: 'Login Successful',
-        description: "You've been successfully logged in.",
+    signInWithEmailAndPassword(auth, email, password)
+      .then(() => {
+        toast({
+          title: 'Login Successful',
+          description: "Welcome back!",
+        });
+        const redirectUrl = searchParams.get('redirect') || '/';
+        router.push(redirectUrl);
+      })
+      .catch((error) => {
+        console.error("Login Error:", error);
+        toast({
+          variant: 'destructive',
+          title: 'Login Failed',
+          description: error.code === 'auth/invalid-credential' 
+            ? 'Invalid email or password.'
+            : 'An unexpected error occurred. Please try again.',
+        });
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
-      router.push('/');
-    } catch (error: any) {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Uh oh! Something went wrong.',
-        description: error.message || 'There was a problem with your request.',
-      });
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+    <div className="flex items-center justify-center min-h-[calc(100vh-200px)] py-12">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>

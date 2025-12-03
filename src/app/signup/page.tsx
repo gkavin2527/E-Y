@@ -9,9 +9,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth, useFirestore, setDocumentNonBlocking } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 
 export default function SignupPage() {
   const [firstName, setFirstName] = useState('');
@@ -24,46 +24,46 @@ export default function SignupPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const handleSignUp = (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth || !firestore) return;
     setIsLoading(true);
 
-    createUserWithEmailAndPassword(auth, email, password)
-      .then(userCredential => {
-        const user = userCredential.user;
-        const userDocRef = doc(firestore, 'users', user.uid);
-        const userData = {
-          id: user.uid,
-          firstName,
-          lastName,
-          email: user.email,
-        };
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-        // Use the non-blocking fire-and-forget method for setting the document.
-        // The error will be caught by the global error handler.
-        setDocumentNonBlocking(userDocRef, userData, { merge: true });
+      const userDocRef = doc(firestore, 'users', user.uid);
+      const userData = {
+        id: user.uid,
+        firstName,
+        lastName,
+        email: user.email,
+      };
 
-        toast({
-          title: 'Account Created',
-          description: "You've been successfully signed up.",
-        });
-        router.push('/');
-      })
-      .catch(error => {
-        // This catch block handles errors from createUserWithEmailAndPassword,
-        // such as "email-already-in-use". It will NOT catch the Firestore
-        // permission error, which is now handled globally.
-        console.error("Signup Auth Error:", error);
-        toast({
-          variant: 'destructive',
-          title: 'Uh oh! Something went wrong.',
-          description: error.message || 'There was a problem with your request.',
-        });
-      })
-      .finally(() => {
-        setIsLoading(false);
+      await setDoc(userDocRef, userData);
+
+      toast({
+        title: 'Account Created',
+        description: "You've been successfully signed up.",
       });
+      router.push('/');
+    } catch (error: any) {
+      console.error("Signup Error:", error);
+      let description = 'There was a problem with your request.';
+      if (error.code === 'auth/email-already-in-use') {
+        description = 'This email address is already in use.';
+      } else if (error.code === 'auth/weak-password') {
+        description = 'The password is too weak. Please choose a stronger password.';
+      }
+      toast({
+        variant: 'destructive',
+        title: 'Sign Up Failed',
+        description,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

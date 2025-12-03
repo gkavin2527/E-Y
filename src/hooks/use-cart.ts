@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useContext, useMemo } from 'react';
@@ -10,7 +11,7 @@ export const useCart = (): CartContextType & { totalItems: number; totalPrice: n
     throw new Error('useCart must be used within a CartProvider');
   }
 
-  const { items, addItem, removeItem, updateQuantity, clearCart } = context;
+  const { items, addItem, removeItem, updateQuantity, clearCart, isCartLoading } = context;
 
   const totalItems = useMemo(() => {
     return items.reduce((total, item) => total + item.quantity, 0);
@@ -22,6 +23,7 @@ export const useCart = (): CartContextType & { totalItems: number; totalPrice: n
 
   return {
     items,
+    isCartLoading,
     addItem,
     removeItem,
     updateQuantity,

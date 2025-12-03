@@ -85,6 +85,8 @@ export function SiteHeader() {
         title: 'Logged Out',
         description: 'You have been successfully logged out.',
       });
+      // You might want to redirect the user after logout
+      // router.push('/');
     } catch (error) {
       console.error('Logout Error:', error);
       toast({
@@ -95,17 +97,8 @@ export function SiteHeader() {
     }
   };
 
-  const getInitials = (firstName?: string, lastName?: string) => {
-    if (firstName && lastName) {
-        return `${firstName[0]}${lastName[0]}`;
-    }
-    if (firstName) {
-        return firstName[0];
-    }
-    if (user?.displayName) {
-      return user.displayName.split(' ').map(n => n[0]).join('');
-    }
-    if(user?.email) {
+  const getInitials = () => {
+    if (user?.email) {
       return user.email[0].toUpperCase();
     }
     return 'U';

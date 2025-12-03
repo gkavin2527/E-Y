@@ -1,19 +1,15 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
-
 
 type UserProfile = {
   id: string;
@@ -49,49 +45,53 @@ export default function ProfilePage() {
           setLastName(data.lastName);
         } else {
             setProfile(null);
+            console.log("No such document!");
         }
         setIsLoading(false);
       }, (error) => {
         console.error("Error fetching user profile:", error);
-        const permissionError = new FirestorePermissionError({
-            path: userDocRef.path,
-            operation: 'get',
-        });
-        errorEmitter.emit('permission-error', permissionError);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not fetch profile. You may not have permission."
+        })
         setIsLoading(false);
       });
 
       return () => unsubscribe();
-
     } else if (!isUserLoading) {
         setIsLoading(false);
     }
   }, [userDocRef, isUserLoading, toast]);
 
 
-  const handleUpdateProfile = (e: React.FormEvent) => {
+  const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userDocRef || !profile) return;
     
     setIsSaving(true);
     
     const updatedData = {
-        ...profile,
         firstName: firstName,
         lastName: lastName,
     };
 
-    updateDocumentNonBlocking(userDocRef, updatedData);
-
-    // Optimistically update UI
-    setProfile(updatedData);
-
-    toast({
-        title: "Profile Update Initiated",
-        description: "Your profile is being updated.",
-    });
-
-    setIsSaving(false);
+    try {
+        await updateDoc(userDocRef, updatedData);
+        toast({
+            title: "Profile Updated",
+            description: "Your profile has been successfully updated.",
+        });
+    } catch (error: any) {
+        console.error("Profile update error:", error);
+        toast({
+            variant: "destructive",
+            title: "Update failed",
+            description: "Could not update your profile. Please try again."
+        })
+    } finally {
+        setIsSaving(false);
+    }
   };
 
   if (isLoading || isUserLoading) {
@@ -123,7 +123,7 @@ export default function ProfilePage() {
         <Card>
             <CardHeader>
                 <CardTitle>Profile Not Found</CardTitle>
-                <CardDescription>We couldn't find your profile data. This might be a permission issue.</CardDescription>
+                <CardDescription>We couldn't find your profile data. If you just signed up, it might be being created.</CardDescription>
             </CardHeader>
         </Card>
     );
