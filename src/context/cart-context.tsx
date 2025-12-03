@@ -11,12 +11,14 @@ type CartAction =
   | { type: 'ADD_ITEM'; payload: { product: Product; size: 'S' | 'M' | 'L' | 'XL'; quantity: number } }
   | { type: 'REMOVE_ITEM'; payload: { itemId: string } }
   | { type: 'UPDATE_QUANTITY'; payload: { itemId: string; quantity: number } }
+  | { type: 'CLEAR_CART' }
   | { type: 'SET_STATE'; payload: CartState };
 
 export interface CartContextType extends CartState {
   addItem: (product: Product, size: 'S' | 'M' | 'L' | 'XL', quantity: number) => void;
   removeItem: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
+  clearCart: () => void;
   totalItems: number;
   totalPrice: number;
 }
@@ -67,6 +69,8 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         ).filter(item => item.quantity > 0), // Also remove if quantity becomes 0
       };
     }
+    case 'CLEAR_CART':
+      return { ...state, items: [] };
     case 'SET_STATE':
         return action.payload;
     default:
@@ -89,10 +93,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    try {
-      localStorage.setItem('modish-cart', JSON.stringify(state));
-    } catch (error) {
-      console.error('Failed to save cart to local storage', error);
+    if (typeof window !== 'undefined') {
+        try {
+            localStorage.setItem('modish-cart', JSON.stringify(state));
+        } catch (error) {
+            console.error('Failed to save cart to local storage', error);
+        }
     }
   }, [state]);
 
@@ -108,6 +114,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     dispatch({ type: 'UPDATE_QUANTITY', payload: { itemId, quantity } });
   };
 
+  const clearCart = () => {
+    dispatch({ type: 'CLEAR_CART' });
+  };
+
   const totalItems = state.items.reduce((total, item) => total + item.quantity, 0);
   const totalPrice = state.items.reduce((total, item) => total + item.price * item.quantity, 0);
 
@@ -116,6 +126,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     addItem,
     removeItem,
     updateQuantity,
+    clearCart,
     totalItems,
     totalPrice,
   };
