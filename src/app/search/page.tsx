@@ -1,10 +1,10 @@
+
 'use client';
 
 import { useSearchParams } from 'next/navigation';
 import { ProductCard } from '@/components/product-card';
 import { Input } from '@/components/ui/input';
 import { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, orderBy } from 'firebase/firestore';
 import type { Product } from '@/lib/types';
@@ -67,11 +67,10 @@ export default function SearchPage() {
             type="search"
             name="q"
             placeholder="Search for products..."
-            className="h-12 pl-12 pr-4 text-lg"
+            className="h-12 pl-4 pr-4 text-lg"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
         </form>
       </div>
 

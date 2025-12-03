@@ -1,8 +1,7 @@
-import { Facebook, Instagram, Twitter, Youtube } from 'lucide-react';
+
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Icons } from '../icons';
 
 export function SiteFooter() {
   return (
@@ -11,16 +10,9 @@ export function SiteFooter() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
             <Link href="/" className="flex items-center space-x-2">
-                <Icons.ModishLogo className="h-8 w-8 text-primary" />
-                <span className="font-bold text-xl font-headline">Modish</span>
+                <span className="font-bold text-xl font-headline">Threads</span>
             </Link>
             <p className="text-sm text-muted-foreground">Effortless style for the modern individual.</p>
-            <div className="flex space-x-4">
-              <Link href="#" aria-label="Facebook"><Facebook className="h-5 w-5 hover:text-primary transition-colors" /></Link>
-              <Link href="#" aria-label="Instagram"><Instagram className="h-5 w-5 hover:text-primary transition-colors" /></Link>
-              <Link href="#" aria-label="Twitter"><Twitter className="h-5 w-5 hover:text-primary transition-colors" /></Link>
-              <Link href="#" aria-label="YouTube"><Youtube className="h-5 w-5 hover:text-primary transition-colors" /></Link>
-            </div>
           </div>
 
           <div>
@@ -52,7 +44,7 @@ export function SiteFooter() {
           </div>
         </div>
         <div className="border-t mt-8 pt-6 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Modish. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Threads. All rights reserved.</p>
         </div>
       </div>
     </footer>

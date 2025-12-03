@@ -7,7 +7,6 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Star, StarHalf, Sparkles } from 'lucide-react';
 import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
@@ -21,19 +20,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 
 const ProductRating = ({ rating }: { rating: number }) => {
-    const fullStars = Math.floor(rating);
-    const halfStar = rating % 1 !== 0;
-    const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
-
+    // This is a placeholder for a star rating component
     return (
         <div className="flex items-center">
-            {[...Array(fullStars)].map((_, i) => (
-                <Star key={`full-${i}`} className="h-5 w-5 fill-primary text-primary" />
-            ))}
-            {halfStar && <StarHalf className="h-5 w-5 fill-primary text-primary" />}
-            {[...Array(emptyStars)].map((_, i) => (
-                <Star key={`empty-${i}`} className="h-5 w-5 text-muted-foreground/50" />
-            ))}
             <span className="ml-2 text-sm text-muted-foreground">({rating.toFixed(1)})</span>
         </div>
     );
@@ -205,7 +194,6 @@ export default function ProductPage() {
 
                 <div className="space-y-4 rounded-lg border bg-accent/50 p-4">
                     <Button onClick={handleGenerateDescription} disabled={isGenerating} variant="outline" className="w-full bg-background hover:bg-background/90">
-                        <Sparkles className="mr-2 h-4 w-4" />
                         {isGenerating ? 'Generating...' : 'Generate AI Description'}
                     </Button>
                     {isGenerating && <p className="text-sm text-muted-foreground animate-pulse">Our fashion AI is crafting a description for you...</p>}

@@ -4,11 +4,10 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { User, FileText } from 'lucide-react';
 
 const accountNavLinks = [
-  { href: '/account/profile', label: 'Profile', icon: User },
-  { href: '/account/orders', label: 'Orders', icon: FileText },
+  { href: '/account/profile', label: 'Profile' },
+  { href: '/account/orders', label: 'Orders' },
 ];
 
 export default function AccountLayout({
@@ -24,7 +23,6 @@ export default function AccountLayout({
         <aside className="md:col-span-1">
           <nav className="flex flex-col space-y-2">
             {accountNavLinks.map((link) => {
-                const Icon = link.icon;
                 return (
               <Link
                 key={link.href}
@@ -34,7 +32,6 @@ export default function AccountLayout({
                   pathname === link.href && 'bg-accent text-primary'
                 )}
               >
-                <Icon className="h-4 w-4" />
                 {link.label}
               </Link>
                 )

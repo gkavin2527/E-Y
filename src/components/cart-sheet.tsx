@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ScrollArea } from './ui/scroll-area';
-import { Minus, Plus, Trash2 } from 'lucide-react';
 import { SheetFooter, SheetClose } from './ui/sheet';
 
 export function CartSheet() {
@@ -45,15 +44,15 @@ export function CartSheet() {
                       <div className="flex items-center justify-between mt-2">
                         <div className="flex items-center border rounded-md">
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateQuantity(item.id, item.quantity - 1)} disabled={item.quantity <= 1}>
-                            <Minus className="h-3 w-3" />
+                            -
                           </Button>
                           <span className="w-8 text-center text-sm">{item.quantity}</span>
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
-                            <Plus className="h-3 w-3" />
+                            +
                           </Button>
                         </div>
                         <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => removeItem(item.id)}>
-                          <Trash2 className="h-4 w-4" />
+                          Remove
                         </Button>
                       </div>
                     </div>

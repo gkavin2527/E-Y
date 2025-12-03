@@ -2,12 +2,6 @@
 'use client';
 
 import Link from 'next/link';
-import {
-  Activity,
-  DollarSign,
-  Users,
-  Package,
-} from 'lucide-react';
 
 import {
   Card,
@@ -23,15 +17,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 function StatCard({
     title,
     value,
-    icon,
     isLoading
 }: {
     title: string;
     value: string;
-    icon: React.ElementType;
+    icon?: React.ElementType;
     isLoading: boolean;
 }) {
-    const Icon = icon;
 
     if (isLoading) {
         return (
@@ -51,7 +43,6 @@ function StatCard({
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">{title}</CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold">{value}</div>
@@ -89,25 +80,21 @@ export default function Dashboard() {
         <StatCard 
             title="Total Revenue"
             value={`₹${totalRevenue.toFixed(2)}`}
-            icon={DollarSign}
             isLoading={areOrdersLoading}
         />
         <StatCard 
             title="Sales"
             value={`+${totalSales}`}
-            icon={Activity}
             isLoading={areOrdersLoading}
         />
         <StatCard 
             title="Products"
             value={`${products?.length || 0}`}
-            icon={Package}
             isLoading={areProductsLoading}
         />
         <StatCard 
             title="Total Users"
             value={`${users?.length || 0}`}
-            icon={Users}
             isLoading={areUsersLoading}
         />
       </div>

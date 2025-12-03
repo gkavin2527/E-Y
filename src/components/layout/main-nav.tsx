@@ -1,9 +1,9 @@
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Icons } from '@/components/icons';
 
 export function MainNav() {
   const pathname = usePathname();
@@ -16,8 +16,7 @@ export function MainNav() {
   return (
     <div className="flex items-center space-x-4 lg:space-x-6">
       <Link href="/" className="mr-6 flex items-center space-x-2">
-        <Icons.ModishLogo className="h-6 w-6" />
-        <span className="font-bold font-headline">Modish</span>
+        <span className="font-bold font-headline">Threads</span>
       </Link>
       <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
         {navLinks.map((link) => (

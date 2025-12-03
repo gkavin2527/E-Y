@@ -1,7 +1,7 @@
+
 'use client';
 import * as React from 'react';
 import Image from 'next/image';
-import { PlusCircle } from 'lucide-react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Product } from '@/lib/types';
@@ -39,7 +39,6 @@ export default function AdminProductsPage() {
         <h1 className="text-lg font-semibold md:text-2xl">Products</h1>
         <div className="ml-auto flex items-center gap-2">
           <Button size="sm" className="h-8 gap-1" onClick={handleAddNew}>
-            <PlusCircle className="h-3.5 w-3.5" />
             <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Add Product</span>
           </Button>
         </div>
