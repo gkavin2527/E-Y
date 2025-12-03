@@ -24,7 +24,7 @@ function OrderItemCard({ item }: { item: Order['items'][0] }) {
                 <p className="font-medium text-sm">{item.name}</p>
                 <p className="text-xs text-muted-foreground">Size: {item.size} &times; {item.quantity}</p>
             </div>
-            <p className="font-medium text-sm">${(item.price * item.quantity).toFixed(2)}</p>
+            <p className="font-medium text-sm">₹{(item.price * item.quantity).toFixed(2)}</p>
         </div>
     )
 }
@@ -94,7 +94,7 @@ export default function OrdersPage() {
                                 </div>
                                 <div className="flex items-center gap-4">
                                      <p className="text-sm text-muted-foreground">{order.items.length} items</p>
-                                    <p className="font-bold text-lg">${order.total.toFixed(2)}</p>
+                                    <p className="font-bold text-lg">₹{order.total.toFixed(2)}</p>
                                 </div>
                             </div>
                         </AccordionTrigger>

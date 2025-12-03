@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCart } from '@/hooks/use-cart';
@@ -60,7 +61,7 @@ export default function CartPage() {
                                             <Link href={`/products/${item.productId}`} className="hover:underline">{item.name}</Link>
                                         </h3>
                                         <p className="text-sm text-muted-foreground">Size: {item.size}</p>
-                                        <p className="text-lg font-semibold mt-2">${item.price.toFixed(2)}</p>
+                                        <p className="text-lg font-semibold mt-2">₹{item.price.toFixed(2)}</p>
                                     </div>
                                     <div className="flex items-center justify-between sm:justify-end sm:space-x-8">
                                         <div className="flex items-center border rounded-md">
@@ -87,16 +88,16 @@ export default function CartPage() {
                     <CardContent className="space-y-4">
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Subtotal</span>
-                            <span>${totalPrice.toFixed(2)}</span>
+                            <span>₹{totalPrice.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Est. Shipping</span>
-                            <span>${shippingCost.toFixed(2)}</span>
+                            <span>₹{shippingCost.toFixed(2)}</span>
                         </div>
                         <Separator />
                         <div className="flex justify-between font-bold text-lg">
                             <span>Total</span>
-                            <span>${totalWithShipping.toFixed(2)}</span>
+                            <span>₹{totalWithShipping.toFixed(2)}</span>
                         </div>
                     </CardContent>
                     <CardFooter>

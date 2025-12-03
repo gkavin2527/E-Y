@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCart } from '@/hooks/use-cart';
@@ -40,7 +41,7 @@ export function CartSheet() {
                         </Link>
                       </h4>
                       <p className="text-xs text-muted-foreground">Size: {item.size}</p>
-                      <p className="text-sm font-semibold mt-1">${item.price.toFixed(2)}</p>
+                      <p className="text-sm font-semibold mt-1">₹{item.price.toFixed(2)}</p>
                       <div className="flex items-center justify-between mt-2">
                         <div className="flex items-center border rounded-md">
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateQuantity(item.id, item.quantity - 1)} disabled={item.quantity <= 1}>
@@ -65,7 +66,7 @@ export function CartSheet() {
             <div className="w-full space-y-4">
               <div className="flex justify-between font-semibold">
                 <span>Subtotal</span>
-                <span>${totalPrice.toFixed(2)}</span>
+                <span>₹{totalPrice.toFixed(2)}</span>
               </div>
               <SheetClose asChild>
                 <Button asChild className="w-full">

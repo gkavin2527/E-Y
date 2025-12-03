@@ -206,7 +206,7 @@ export default function CheckoutPage() {
               </Card>
 
               <Button type="submit" className="w-full" size="lg" disabled={isProcessing}>
-                {isProcessing ? 'Processing...' : `Place Order - $${totalWithShipping.toFixed(2)}`}
+                {isProcessing ? 'Processing...' : `Place Order - ₹${totalWithShipping.toFixed(2)}`}
               </Button>
             </form>
           </Form>
@@ -230,7 +230,7 @@ export default function CheckoutPage() {
                                         <p className="font-medium text-sm">{item.name}</p>
                                         <p className="text-xs text-muted-foreground">Size: {item.size} &times; {item.quantity}</p>
                                     </div>
-                                    <p className="font-medium text-sm">${(item.price * item.quantity).toFixed(2)}</p>
+                                    <p className="font-medium text-sm">₹{(item.price * item.quantity).toFixed(2)}</p>
                                 </div>
                             )
                         })}
@@ -239,16 +239,16 @@ export default function CheckoutPage() {
                     <div className="space-y-2">
                         <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Subtotal</span>
-                            <span>${totalPrice.toFixed(2)}</span>
+                            <span>₹{totalPrice.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Shipping</span>
-                            <span>${shippingCost.toFixed(2)}</span>
+                            <span>₹{shippingCost.toFixed(2)}</span>
                         </div>
                         <Separator className="my-2" />
                         <div className="flex justify-between font-bold">
                             <span>Total</span>
-                            <span>${totalWithShipping.toFixed(2)}</span>
+                            <span>₹{totalWithShipping.toFixed(2)}</span>
                         </div>
                     </div>
                 </CardContent>

@@ -88,7 +88,7 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         <StatCard 
             title="Total Revenue"
-            value={`$${totalRevenue.toFixed(2)}`}
+            value={`₹${totalRevenue.toFixed(2)}`}
             icon={DollarSign}
             isLoading={areOrdersLoading}
         />

@@ -95,7 +95,7 @@ export default function AdminProductsPage() {
                             {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
                         </Badge>
                     </TableCell>
-                    <TableCell>${product.price.toFixed(2)}</TableCell>
+                    <TableCell>₹{product.price.toFixed(2)}</TableCell>
                     <TableCell className="hidden md:table-cell capitalize">{product.gender}</TableCell>
                     <TableCell className="hidden md:table-cell capitalize">{product.category}</TableCell>
                     <TableCell>

@@ -37,7 +37,7 @@ export function ProductCard({ product }: ProductCardProps) {
           <h3 className="font-medium text-sm text-foreground truncate">
              <Link href={`/products/${product.id}`}>{product.name}</Link>
           </h3>
-          <p className="font-semibold mt-1 text-foreground">${product.price.toFixed(2)}</p>
+          <p className="font-semibold mt-1 text-foreground">₹{product.price.toFixed(2)}</p>
         </div>
         <Button variant="outline" size="icon" className="shrink-0">
           <ShoppingBag className="h-4 w-4"/>
