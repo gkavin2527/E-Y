@@ -9,18 +9,18 @@
  * - Products are in a top-level `products` collection for easier management.
  * - All user-specific data is stored under `/users/{userId}`.
  * - Orders are in a top-level `orders` collection so admins can list them.
+ * - Admin users are identified by their UID existing in the `admins` collection.
  *
  * Key Security Decisions:
  * - Public Read: All product data is publicly readable for browsing.
  * - Admin-Only Writes: All write operations on products are restricted to admins.
- *   This is a critical security measure.
  * - User Privacy: User profiles and carts are strictly private. A user can only
  *   access their own data.
  * - Order Access: Users can only read their own orders. Admins can read all orders.
  *
  * Authorization:
- * This ruleset uses a user's document in the `/users/{userId}` collection to
- * determine their role. It does NOT use custom claims.
+ * This ruleset uses a dedicated `admins` collection to determine admin status.
+ * An admin is any signed-in user whose UID exists as a document ID in `/admins`.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -36,16 +36,9 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      // An admin is a signed-in user whose document in the 'users' collection
-      // has the 'role' field set to 'admin'.
-      // This performs a direct read of the user's own profile document.
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-
-    // Validates that a user is creating their own profile and that the
-    // document ID is consistent with the user's UID.
-    function isCreatingOwnProfile(userId) {
-      return isOwner(userId) && request.resource.data.id == userId;
+      // An admin is a signed-in user whose UID exists as a document
+      // in the top-level 'admins' collection.
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
     /**
@@ -60,7 +53,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
       allow list: if isAdmin();
-      allow create: if isCreatingOwnProfile(userId) && request.resource.data.role == 'customer';
+      allow create: if isOwner(userId) && request.resource.data.role == 'customer';
       allow update: if isOwner(userId) || isAdmin();
       allow delete: if isAdmin();
 
@@ -82,7 +75,7 @@ service cloud.firestore {
      */
     match /products/{productId} {
       allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow write: if isAdmin();
     }
     
     /**
@@ -94,9 +87,19 @@ service cloud.firestore {
      */
     match /orders/{orderId} {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow get: if isOwner(resource.data.userId) || isAdmin();
+      allow get: if (isOwner(resource.data.userId)) || isAdmin();
       allow list: if isAdmin();
       allow update, delete: if false;
+    }
+
+    /**
+     * @description Admins collection.
+     * @path /admins/{userId}
+     * @allow (read, list) Restricted to admins for auditing purposes.
+     * @allow (write) Restricted to admins to manage other admins.
+     */
+    match /admins/{userId} {
+        allow read, write, list: if isAdmin();
     }
   }
 }

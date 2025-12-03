@@ -213,7 +213,7 @@
         },
         "image": {
           "type": "string",
-          "description": "The image ID of the product at the time of purchase."
+          "description": "The image ID of the. product at the time of purchase."
         }
       },
       "required": [
@@ -257,6 +257,12 @@
         "total",
         "items"
       ]
+    },
+    "AdminUser": {
+        "title": "Admin User",
+        "description": "A document representing an admin user. The document ID is the user's UID.",
+        "type": "object",
+        "properties": {}
     }
   },
   "auth": {
@@ -365,6 +371,18 @@
               "description": "Unique identifier for the order."
             }
           ]
+        }
+      },
+      {
+        "path": "admins/{userId}",
+        "definition": {
+            "entityName": "AdminUser",
+            "schema": { "$ref": "#/entities/AdminUser"},
+            "description": "A collection where each document ID is the UID of an admin user. Used for security rules.",
+            "params": [{
+                "name": "userId",
+                "description": "The UID of the admin user."
+            }]
         }
       }
     ],
