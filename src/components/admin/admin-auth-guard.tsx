@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Loader2 } from 'lucide-react';
 
@@ -34,34 +35,33 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
   
   const { data: adminDoc, isLoading: isAdminDocLoading } = useDoc(adminDocRef);
 
-  useEffect(() => {
-    // Don't do anything until all data is loaded
-    if (isUserLoading || isAdminDocLoading) {
-      return;
-    }
-
-    // Redirect non-logged-in users
-    if (!user) {
-      router.replace('/login?redirect=/admin');
-      return;
-    }
-
-    // Redirect logged-in users who are not admins
-    if (!adminDoc) {
-      router.replace('/');
-    }
-  }, [isUserLoading, isAdminDocLoading, user, adminDoc, router]);
-
-  // While loading, show the loading screen
+  // If either the user authentication or the admin document check is loading, show a loading screen.
+  // This is the most important part: we do not proceed or attempt any redirects until we have all the information.
   if (isUserLoading || isAdminDocLoading) {
     return <LoadingScreen />;
   }
 
-  // If the user is an admin, show the admin panel
-  if (user && adminDoc) {
-    return <>{children}</>;
-  }
+  // After all loading is complete, we can safely check the conditions.
+  // If there's no user, or if there's a user but no admin document, they are not allowed.
+  const isAllowed = user && adminDoc;
 
-  // Otherwise, render nothing while the redirect initiated by useEffect takes place
-  return null;
+  if (!isAllowed) {
+    // If not allowed, redirect them. We use a useEffect to handle this side-effect
+    // after the initial render, which is a safe React pattern.
+    useEffect(() => {
+      if (!user) {
+        // If the reason is "no user", redirect to login.
+        router.replace('/login?redirect=/admin');
+      } else {
+        // Otherwise, they are a user but not an admin, so redirect to home.
+        router.replace('/');
+      }
+    }, [user, router]);
+
+    // Render nothing while the redirect is being processed.
+    return null;
+  }
+  
+  // If all checks pass and the user is allowed, render the admin panel.
+  return <>{children}</>;
 }
