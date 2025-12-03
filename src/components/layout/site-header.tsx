@@ -26,6 +26,51 @@ import { useUser, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from '../ui/input';
+import { useRouter } from 'next/navigation';
+import React from 'react';
+
+
+const SearchDialog = () => {
+  const router = useRouter();
+  const [open, setOpen] = React.useState(false);
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const searchQuery = formData.get('q') as string;
+    router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+    setOpen(false); // Close the dialog after search
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label="Search">
+          <Search className="h-5 w-5" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Search for products</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit}>
+          <div className="flex items-center space-x-2">
+            <Input name="q" placeholder="e.g. 'Classic Crewneck Tee'" autoFocus />
+            <Button type="submit">Search</Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 export function SiteHeader() {
   const { totalItems } = useCart();
@@ -73,9 +118,7 @@ export function SiteHeader() {
         <MainNav />
         <div className="flex flex-1 items-center justify-end space-x-4">
           <nav className="flex items-center space-x-1">
-            <Button variant="ghost" size="icon" aria-label="Search">
-              <Search className="h-5 w-5" />
-            </Button>
+            <SearchDialog />
             
             {isUserLoading ? (
               <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
