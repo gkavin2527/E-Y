@@ -82,9 +82,18 @@ export function ProductDialog({ isOpen, setIsOpen, product }: ProductDialogProps
         images: product.images,
       });
     } else {
-      form.reset();
+      form.reset({
+        name: '',
+        description: '',
+        price: 0,
+        stock: 0,
+        gender: 'women',
+        category: '',
+        sizes: [],
+        images: [],
+      });
     }
-  }, [product, form]);
+  }, [product, form, isOpen]);
 
   const onSubmit = async (data: ProductFormValues) => {
     if (!firestore) return;
@@ -93,7 +102,7 @@ export function ProductDialog({ isOpen, setIsOpen, product }: ProductDialogProps
       if (product) {
         // Update existing product
         const productRef = doc(firestore, 'products', product.id);
-        await setDoc(productRef, data, { merge: true });
+        await setDoc(productRef, { ...data, rating: product.rating || 5 }, { merge: true });
         toast({ title: 'Success', description: 'Product updated successfully.' });
       } else {
         // Create new product
