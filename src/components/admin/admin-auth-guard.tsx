@@ -24,44 +24,61 @@ function LoadingScreen() {
 }
 
 export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const router = useRouter();
 
   const adminDocRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'admins', user.uid) : null),
     [firestore, user]
   );
-  
-  const { data: adminDoc, isLoading: isAdminDocLoading } = useDoc(adminDocRef);
 
-  // If either the user authentication or the admin document check is loading, show a loading screen.
-  // This is the most important part: we do not proceed or attempt any redirects until we have all the information.
-  if (isUserLoading || isAdminDocLoading) {
+  const { data: adminDoc, isLoading: isAdminDocLoading, error: adminDocError } = useDoc(adminDocRef);
+
+  // LOGGING STEP 1: Log initial hook values
+  console.log('[AdminGuard] State update:', {
+    isUserLoading,
+    user: user ? { uid: user.uid, email: user.email } : null,
+    isAdminDocLoading,
+    adminDocExists: adminDoc ? true : false,
+    adminDocError: adminDocError ? adminDocError.message : null,
+  });
+
+  useEffect(() => {
+    // This effect handles the redirection logic
+    const isDataLoading = isUserLoading || isAdminDocLoading;
+    if (isDataLoading) {
+      // LOGGING STEP 2: Log that we are waiting for data
+      console.log('[AdminGuard] Waiting for data to load...');
+      return; // Do nothing while loading
+    }
+    
+    // Once loading is complete, decide what to do
+    const isAllowed = user && adminDoc;
+    
+    // LOGGING STEP 3: Log the final decision
+    console.log(`[AdminGuard] Decision: isAllowed = ${isAllowed}. Redirecting? ${!isAllowed}`);
+
+    if (!isAllowed) {
+        if (!user) {
+            router.replace('/login?redirect=/admin');
+        } else {
+            router.replace('/');
+        }
+    }
+  }, [user, adminDoc, isUserLoading, isAdminDocLoading, router]);
+
+  const isDataLoading = isUserLoading || isAdminDocLoading;
+  const isAllowed = user && adminDoc;
+  
+  if (isDataLoading) {
     return <LoadingScreen />;
   }
-
-  // After all loading is complete, we can safely check the conditions.
-  // If there's no user, or if there's a user but no admin document, they are not allowed.
-  const isAllowed = user && adminDoc;
-
-  if (!isAllowed) {
-    // If not allowed, redirect them. We use a useEffect to handle this side-effect
-    // after the initial render, which is a safe React pattern.
-    useEffect(() => {
-      if (!user) {
-        // If the reason is "no user", redirect to login.
-        router.replace('/login?redirect=/admin');
-      } else {
-        // Otherwise, they are a user but not an admin, so redirect to home.
-        router.replace('/');
-      }
-    }, [user, router]);
-
-    // Render nothing while the redirect is being processed.
-    return null;
-  }
   
-  // If all checks pass and the user is allowed, render the admin panel.
-  return <>{children}</>;
+  if (isAllowed) {
+    return <>{children}</>;
+  }
+
+  // Render the loading screen during the brief moment of redirection
+  return <LoadingScreen />;
 }
