@@ -35,29 +35,33 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
   const { data: adminDoc, isLoading: isAdminDocLoading } = useDoc(adminDocRef);
 
   useEffect(() => {
-    // This effect handles redirecting non-logged-in users.
-    if (!isUserLoading && !user) {
-      router.replace('/login?redirect=/admin');
+    // Don't do anything until all data is loaded
+    if (isUserLoading || isAdminDocLoading) {
+      return;
     }
-  }, [isUserLoading, user, router]);
 
-  // Primary Loading State: If we are waiting for the user object itself.
-  if (isUserLoading || !user) {
+    // Redirect non-logged-in users
+    if (!user) {
+      router.replace('/login?redirect=/admin');
+      return;
+    }
+
+    // Redirect logged-in users who are not admins
+    if (!adminDoc) {
+      router.replace('/');
+    }
+  }, [isUserLoading, isAdminDocLoading, user, adminDoc, router]);
+
+  // While loading, show the loading screen
+  if (isUserLoading || isAdminDocLoading) {
     return <LoadingScreen />;
   }
 
-  // Secondary Loading State: If we have the user, but are waiting for the admin check.
-  if (isAdminDocLoading) {
-    return <LoadingScreen />;
-  }
-  
-  // Final Decision: Once all data is loaded.
-  if (adminDoc) {
-    // If adminDoc exists, user is an admin. Show the panel.
+  // If the user is an admin, show the admin panel
+  if (user && adminDoc) {
     return <>{children}</>;
-  } else {
-    // If adminDoc does not exist, user is not an admin. Redirect.
-    router.replace('/');
-    return null; // Render nothing while redirecting.
   }
+
+  // Otherwise, render nothing while the redirect initiated by useEffect takes place
+  return null;
 }
