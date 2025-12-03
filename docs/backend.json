@@ -112,7 +112,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the user profile."
+          "description": "Unique identifier for the user profile, matching the Auth UID."
         },
         "email": {
           "type": "string",
@@ -165,13 +165,9 @@
       "type": "object",
       "description": "Represents a shopping cart for a user.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the cart (typically same as user ID)."
-        },
         "userId": {
           "type": "string",
-          "description": "Reference to UserProfile. (Relationship: UserProfile 1:1 Cart)"
+          "description": "Reference to UserProfile ID (Auth UID). (Relationship: UserProfile 1:1 Cart)"
         },
         "items": {
           "type": "array",
@@ -182,7 +178,6 @@
         }
       },
       "required": [
-        "id",
         "userId",
         "items"
       ]
@@ -259,36 +254,36 @@
       {
         "path": "users/{userId}",
         "definition": {
-          "entityName": "User",
+          "entityName": "UserProfile",
           "schema": {
-            "$ref": "#/entities/User"
+            "$ref": "#/entities/UserProfile"
           },
           "description": "Represents a user profile.",
           "params": [
             {
               "name": "userId",
-              "description": "Unique identifier for the user.  This matches the Firebase Auth UID."
+              "description": "Unique identifier for the user. This must match the Firebase Auth UID."
             }
           ]
         }
       },
       {
-        "path": "carts/{userId}",
+        "path": "users/{userId}/cart",
         "definition": {
           "entityName": "Cart",
           "schema": {
             "$ref": "#/entities/Cart"
           },
-          "description": "Represents a shopping cart for a user.  Owned by the user via the path.",
+          "description": "Represents a shopping cart for a user, stored as a subcollection under the user's document.",
           "params": [
             {
               "name": "userId",
-              "description": "Unique identifier for the user.  This matches the Firebase Auth UID."
+              "description": "Unique identifier for the user. This must match the Firebase Auth UID."
             }
           ]
         }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to support an e-commerce application, mirroring the user interface and functionality requirements. It focuses on Products, Categories, Sections (Men, Women), User profiles, and Shopping Carts. The structure prioritizes authorization independence through data denormalization, ensuring that security rules are simple, robust, and easily debuggable.  Each entity follows a clear naming convention and consistent field naming for predictability and maintainability."
+    "reasoning": "The Firestore data structure is designed to support an e-commerce application, mirroring the user interface and functionality requirements. It focuses on Products, Categories, Sections (Men, Women), User profiles, and Shopping Carts. The structure prioritizes authorization independence through data denormalization, ensuring that security rules are simple, robust, and easily debuggable. Each entity follows a clear naming convention and consistent field naming for predictability and maintainability."
   }
 }

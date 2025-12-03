@@ -4,22 +4,22 @@
 import React, { createContext, useReducer, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { useUser, useFirestore, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import type { CartItem, Product, CartItemDetails } from '@/lib/types';
+import type { CartItem, Product, Cart } from '@/lib/types';
 
 type CartState = {
-  items: CartItemDetails[];
+  items: CartItem[];
 };
 
 type CartAction =
-  | { type: 'ADD_ITEM'; payload: { productId: string; size: 'S' | 'M' | 'L' | 'XL'; quantity: number } }
+  | { type: 'ADD_ITEM'; payload: { product: Product; size: 'S' | 'M' | 'L' | 'XL'; quantity: number } }
   | { type: 'REMOVE_ITEM'; payload: { itemId: string } }
   | { type: 'UPDATE_QUANTITY'; payload: { itemId: string; quantity: number } }
   | { type: 'CLEAR_CART' }
-  | { type: 'SET_CART'; payload: CartItemDetails[] };
+  | { type: 'SET_CART'; payload: CartItem[] };
 
 
 export interface CartContextType {
-  items: CartItemDetails[];
+  items: CartItem[];
   addItem: (product: Product, size: 'S' | 'M' | 'L' | 'XL', quantity: number) => void;
   removeItem: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
@@ -35,8 +35,8 @@ export const CartContext = createContext<CartContextType & { totalItems: number;
 const cartReducer = (state: CartState, action: CartAction): CartState => {
   switch (action.type) {
     case 'ADD_ITEM': {
-      const { productId, size, quantity } = action.payload;
-      const itemId = `${productId}-${size}`;
+      const { product, size, quantity } = action.payload;
+      const itemId = `${product.id}-${size}`;
       const existingItemIndex = state.items.findIndex((item) => item.id === itemId);
 
       if (existingItemIndex > -1) {
@@ -44,9 +44,12 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         updatedItems[existingItemIndex].quantity += quantity;
         return { ...state, items: updatedItems };
       } else {
-        const newItem: CartItemDetails = {
+        const newItem: CartItem = {
           id: itemId,
-          productId,
+          productId: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.images[0],
           size,
           quantity,
         };
@@ -86,7 +89,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const firestore = useFirestore();
   
     const cartDocRef = useMemoFirebase(
-      () => (firestore && user ? doc(firestore, 'carts', user.uid) : null),
+      () => (firestore && user ? doc(firestore, 'users', user.uid, 'cart', 'items') : null),
       [firestore, user]
     );
   
@@ -100,12 +103,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           try {
             const docSnap = await getDoc(cartDocRef);
             if (docSnap.exists()) {
-              const firestoreCart = docSnap.data().items as CartItemDetails[];
+              const firestoreCart = (docSnap.data() as Cart).items || [];
               // Merge with local cart
               const localCart = getLocalCart();
               const mergedCart = mergeCarts(firestoreCart, localCart);
               dispatch({ type: 'SET_CART', payload: mergedCart });
-              clearLocalCart();
+              if (localCart.length > 0) {
+                clearLocalCart();
+              }
             } else {
               // No cart in Firestore, use local and get ready to sync
               const localCart = getLocalCart();
@@ -113,6 +118,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             }
           } catch (e) {
             console.error("Error loading cart from Firestore", e);
+             // Fallback to local storage if firestore fails
+            const localCart = getLocalCart();
+            dispatch({ type: 'SET_CART', payload: localCart });
           }
         } else {
           // User is not logged in, load from local storage
@@ -123,7 +131,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       loadCart();
     }, [user, isUserLoading, cartDocRef]);
 
-    const getLocalCart = (): CartItemDetails[] => {
+    const getLocalCart = (): CartItem[] => {
         try {
             const savedState = localStorage.getItem(LOCAL_STORAGE_KEY);
             return savedState ? JSON.parse(savedState) : [];
@@ -139,13 +147,12 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   
     // Effect to save cart to Firestore or local storage
     useEffect(() => {
-      // Don't save initial empty state until loaded
-      if (isUserLoading && state.items.length === 0 && !cartDocRef) return;
+      // Don't save initial empty state until loaded from persistence
+      if (isUserLoading) return;
   
       if (user && cartDocRef) {
-        // Debounced save to Firestore
         const handler = setTimeout(() => {
-          const cartData = { userId: user.uid, items: state.items };
+          const cartData: Cart = { userId: user.uid, items: state.items };
           setDocumentNonBlocking(cartDocRef, cartData, { merge: true });
         }, 500);
         return () => clearTimeout(handler);
@@ -160,7 +167,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }, [state.items, user, cartDocRef, isUserLoading]);
   
     const addItem = (product: Product, size: 'S' | 'M' | 'L' | 'XL', quantity: number) => {
-      dispatch({ type: 'ADD_ITEM', payload: { productId: product.id, size, quantity } });
+      dispatch({ type: 'ADD_ITEM', payload: { product, size, quantity } });
     };
   
     const removeItem = (itemId: string) => {
@@ -191,7 +198,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
   };
 
-  function mergeCarts(firestoreCart: CartItemDetails[], localCart: CartItemDetails[]): CartItemDetails[] {
+  function mergeCarts(firestoreCart: CartItem[], localCart: CartItem[]): CartItem[] {
     const merged = [...firestoreCart];
   
     localCart.forEach(localItem => {

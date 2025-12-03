@@ -29,10 +29,8 @@ export type CartItem = {
   quantity: number;
 };
 
-// Represents the minimal cart item data stored in Firestore.
-export type CartItemDetails = {
-    id: string;
-    productId: string;
-    size: 'S' | 'M' | 'L' | 'XL';
-    quantity: number;
-}
+// Represents the shopping cart object stored in Firestore
+export type Cart = {
+  userId: string;
+  items: CartItem[];
+};
