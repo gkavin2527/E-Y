@@ -70,11 +70,23 @@ export default function ProductPage({ params }: { params: { productId: string } 
     <div className="container mx-auto px-4 py-8">
         <Breadcrumb className="mb-8">
             <BreadcrumbList>
-                <BreadcrumbItem><Link href="/">Home</Link></BreadcrumbItem>
+                <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                        <Link href="/">Home</Link>
+                    </BreadcrumbLink>
+                </BreadcrumbItem>
                 <BreadcrumbSeparator />
-                <BreadcrumbItem><Link href={`/${product.gender}`}>{product.gender.charAt(0).toUpperCase() + product.gender.slice(1)}</Link></BreadcrumbItem>
+                <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                        <Link href={`/${product.gender}`}>{product.gender.charAt(0).toUpperCase() + product.gender.slice(1)}</Link>
+                    </BreadcrumbLink>
+                </BreadcrumbItem>
                 <BreadcrumbSeparator />
-                <BreadcrumbItem><Link href={`/${product.gender}/${product.category}`}>{product.category.charAt(0).toUpperCase() + product.category.slice(1)}</Link></BreadcrumbItem>
+                <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                        <Link href={`/${product.gender}/${product.category}`}>{product.category.charAt(0).toUpperCase() + product.category.slice(1)}</Link>
+                    </BreadcrumbLink>
+                </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem><BreadcrumbPage>{product.name}</BreadcrumbPage></BreadcrumbItem>
             </BreadcrumbList>

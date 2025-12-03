@@ -31,7 +31,11 @@ export default function CartPage() {
     <div className="container mx-auto px-4 py-8">
         <Breadcrumb className="mb-8">
             <BreadcrumbList>
-                <BreadcrumbItem><Link href="/">Home</Link></BreadcrumbItem>
+                <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                        <Link href="/">Home</Link>
+                    </BreadcrumbLink>
+                </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem><BreadcrumbPage>Shopping Cart</BreadcrumbPage></BreadcrumbItem>
             </BreadcrumbList>
