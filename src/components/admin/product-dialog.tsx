@@ -64,11 +64,6 @@ export function ProductDialog({ isOpen, setIsOpen, product }: ProductDialogProps
     },
   });
 
-  const { fields: imageFields, append: appendImage, remove: removeImage } = useFieldArray({
-    control: form.control,
-    name: "images"
-  });
-
   useEffect(() => {
     if (product) {
       form.reset({
@@ -218,7 +213,7 @@ export function ProductDialog({ isOpen, setIsOpen, product }: ProductDialogProps
                                                     className="sr-only peer"
                                                 />
                                                 <div className="relative aspect-square rounded-md overflow-hidden ring-offset-background peer-data-[state=checked]:ring-2 peer-data-[state=checked]:ring-primary">
-                                                    <Image src={image.imageUrl} alt={image.description} fill className="object-cover" />
+                                                    <Image src={image.imageUrl} alt={image.description || 'Product image'} fill className="object-cover" />
                                                     <div className="absolute inset-0 bg-black/50 peer-data-[state=checked]:opacity-100 opacity-0 transition-opacity flex items-center justify-center">
                                                         <Check className="h-8 w-8 text-white" />
                                                     </div>
