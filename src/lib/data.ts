@@ -46,6 +46,8 @@ const productData = {
 const generateProducts = (): Product[] => {
   const allProducts: Product[] = [];
   let productIdCounter = 1;
+  const basePrices = [39.99, 49.99, 59.99, 79.99, 89.99, 129.99, 149.99, 199.99];
+  const baseRatings = [3.8, 4.0, 4.2, 4.5, 4.7, 4.9];
 
   for (const gender of Object.keys(productData) as ('men' | 'women')[]) {
     for (const category of Object.keys(productData[gender])) {
@@ -53,13 +55,19 @@ const generateProducts = (): Product[] => {
       for (let i = 0; i < productNames.length; i++) {
         const name = productNames[i];
         const id = productIdCounter++;
+        
+        // Simple deterministic generation based on ID and name length
+        const price = basePrices[id % basePrices.length] + (name.length % 10);
+        const rating = baseRatings[id % baseRatings.length];
+        const stock = (id * 7) % 100;
+
         const product: Product = {
           id: `${id}`,
           name: name,
           description: 'A stylish and comfortable choice for modern wardrobes.',
-          price: parseFloat((Math.random() * (200 - 30) + 30).toFixed(2)),
-          rating: parseFloat((Math.random() * (5 - 3.5) + 3.5).toFixed(1)),
-          stock: Math.floor(Math.random() * 100),
+          price: parseFloat(price.toFixed(2)),
+          rating: parseFloat(rating.toFixed(1)),
+          stock: stock,
           images: [`${gender.charAt(0)}-${category.split('wear')[0]}-${i + 1}`],
           category: category,
           gender: gender,
