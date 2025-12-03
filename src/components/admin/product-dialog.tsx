@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, ChangeEvent } from 'react';
 import Image from 'next/image';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,8 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import type { Product } from '@/lib/types';
-import { PlaceHolderImages, type ImagePlaceholder } from '@/lib/placeholder-images';
-import { Check } from 'lucide-react';
+import { Trash2, Upload } from 'lucide-react';
 
 const productSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters.'),
@@ -28,7 +27,7 @@ const productSchema = z.object({
   sizes: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: 'You have to select at least one size.',
   }),
-  images: z.array(z.string().url({ message: 'Please enter a valid URL.' })).min(1, 'Please add at least one image URL.'),
+  images: z.array(z.string().min(10, { message: 'Please add at least one image.' })).min(1, 'Please add at least one image.'),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -40,6 +39,61 @@ interface ProductDialogProps {
 }
 
 const allSizes = ['S', 'M', 'L', 'XL'];
+
+const ImageUrlInput = ({ value, onChange, onRemove }: { value: string; onChange: (value: string) => void; onRemove: () => void }) => {
+    const [isUploading, setIsUploading] = useState(false);
+
+    const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const dataUri = event.target?.result as string;
+            onChange(dataUri);
+            setIsUploading(false);
+        };
+        reader.onerror = (error) => {
+            console.error("Error reading file:", error);
+            setIsUploading(false);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    return (
+        <div className="flex items-center gap-2 group">
+            {value ? (
+                <div className="relative w-24 h-24 rounded-md overflow-hidden border">
+                    <Image src={value} alt="Product image preview" layout="fill" objectFit="cover" />
+                </div>
+            ) : (
+                <div className="w-24 h-24 rounded-md border border-dashed flex items-center justify-center bg-muted">
+                    <span className="text-xs text-muted-foreground">Preview</span>
+                </div>
+            )}
+            <div className="flex-1">
+                <div className="relative">
+                    <Input 
+                        value={isUploading ? "Uploading..." : value} 
+                        onChange={(e) => onChange(e.target.value)} 
+                        placeholder="Paste image URL or upload"
+                        disabled={isUploading}
+                        className="pr-10"
+                    />
+                    <label htmlFor={`file-upload-${Math.random()}`} className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center cursor-pointer text-muted-foreground hover:text-primary">
+                        <Upload className="h-4 w-4" />
+                        <input id={`file-upload-${Math.random()}`} type="file" className="sr-only" onChange={handleFileChange} accept="image/*" />
+                    </label>
+                </div>
+            </div>
+            <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={onRemove}>
+                <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+        </div>
+    );
+};
+
 
 export function ProductDialog({ isOpen, setIsOpen, product }: ProductDialogProps) {
   const firestore = useFirestore();
@@ -61,7 +115,7 @@ export function ProductDialog({ isOpen, setIsOpen, product }: ProductDialogProps
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields: imageFields, append: appendImage, remove: removeImage } = useFieldArray({
     control: form.control,
     name: "images",
   });
@@ -143,7 +197,7 @@ export function ProductDialog({ isOpen, setIsOpen, product }: ProductDialogProps
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-8">
+            <div className="grid md:grid-cols-2 gap-8 max-h-[70vh] overflow-y-auto pr-4">
               <div className="space-y-4">
                 <FormField control={form.control} name="name" render={({ field }) => (
                   <FormItem><FormLabel>Product Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
@@ -197,43 +251,48 @@ export function ProductDialog({ isOpen, setIsOpen, product }: ProductDialogProps
                 )} />
               </div>
               <div>
-                <FormItem>
-                    <FormLabel>Image URLs</FormLabel>
-                    <FormDescription>
-                        Add links to your product images. You can host them on services like Imgur or a cloud provider.
-                    </FormDescription>
-                    <div className="space-y-2">
-                        {fields.map((field, index) => (
-                            <div key={field.id} className="flex items-center gap-2">
-                                <FormField
-                                    control={form.control}
-                                    name={`images.${index}`}
-                                    render={({ field }) => (
-                                        <FormItem className="flex-1">
-                                            <FormControl>
-                                                <Input {...field} placeholder="https://example.com/image.png" />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <Button type="button" variant="destructive" size="sm" onClick={() => remove(index)}>Remove</Button>
-                            </div>
-                        ))}
-                         <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="mt-2"
-                            onClick={() => append("")}
-                        >
-                            Add Image URL
-                        </Button>
-                    </div>
-                </FormItem>
+                <FormField control={form.control} name="images" render={() => (
+                    <FormItem>
+                        <FormLabel>Product Images</FormLabel>
+                        <FormDescription>
+                            Click the upload icon to select an image from your computer, or paste a URL.
+                        </FormDescription>
+                        <div className="space-y-2">
+                           {imageFields.map((field, index) => (
+                             <FormField
+                                key={field.id}
+                                control={form.control}
+                                name={`images.${index}`}
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormControl>
+                                        <ImageUrlInput 
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            onRemove={() => removeImage(index)}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                           ))}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="mt-2"
+                                onClick={() => appendImage("")}
+                            >
+                                Add Image
+                            </Button>
+                        </div>
+                         <FormMessage />
+                    </FormItem>
+                )} />
               </div>
             </div>
-            <DialogFooter className="pt-4">
+            <DialogFooter className="pt-4 border-t">
               {product && <Button type="button" variant="destructive" onClick={handleDelete} disabled={isDeleting}>{isDeleting ? 'Deleting...' : 'Delete'}</Button>}
               <Button type="submit" disabled={isSaving} className="ml-auto">
                 {isSaving ? 'Saving...' : 'Save Changes'}
