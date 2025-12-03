@@ -19,8 +19,8 @@
  * - Order Access: Users can only read their own orders. Admins can read all orders.
  *
  * Authorization:
- * This ruleset uses Firebase Auth custom claims for role-based access control.
- * The `role` custom claim is expected to be set on the user's auth token.
+ * This ruleset uses a user's document in the `/users/{userId}` collection to
+ * determine their role. It does NOT use custom claims.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -36,7 +36,10 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && request.auth.token.role == 'admin';
+      // An admin is a signed-in user whose document in the 'users' collection
+      // has the 'role' field set to 'admin'.
+      // This performs a direct read of the user's own profile document.
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
     // Validates that a user is creating their own profile and that the
@@ -51,7 +54,7 @@ service cloud.firestore {
      * @allow (get) Owner or an admin can read a user profile.
      * @allow (create) New users can create their own profile with a 'customer' role.
      * @allow (update) Owner can update their profile. Admins can update any profile (e.g. to change role).
-     * @allow (list) Admins can list users.
+     * @allow (list) Admins can list users. This is a key rule for the admin panel.
      */
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
