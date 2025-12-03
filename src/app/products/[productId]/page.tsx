@@ -2,7 +2,6 @@
 'use client';
 
 import { notFound, useParams } from 'next/navigation';
-import { products } from '@/lib/data';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -16,6 +15,11 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import Link from 'next/link';
 import { ProductCard } from '@/components/product-card';
 import { generateProductDescriptions } from '@/ai/flows/generate-product-descriptions';
+import { useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
+import { doc, collection, query, where, limit } from 'firebase/firestore';
+import type { Product } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 const ProductRating = ({ rating }: { rating: number }) => {
     const fullStars = Math.floor(rating);
@@ -36,11 +40,69 @@ const ProductRating = ({ rating }: { rating: number }) => {
     );
 };
 
+function ProductPageSkeleton() {
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <Skeleton className="h-6 w-2/3 mb-8" />
+       <div className="grid md:grid-cols-2 gap-12">
+            <div className="flex flex-col-reverse md:flex-row gap-4">
+                <div className="flex md:flex-col gap-2">
+                    <Skeleton className="h-20 w-20 md:h-24 md:w-24 rounded-lg" />
+                    <Skeleton className="h-20 w-20 md:h-24 md:w-24 rounded-lg" />
+                    <Skeleton className="h-20 w-20 md:h-24 md:w-24 rounded-lg" />
+                </div>
+                <div className="relative aspect-[3/4] flex-1 rounded-lg overflow-hidden">
+                    <Skeleton className="h-full w-full" />
+                </div>
+            </div>
+            <div className="space-y-6">
+                <Skeleton className="h-9 w-3/4" />
+                <Skeleton className="h-8 w-1/4" />
+                <Skeleton className="h-6 w-1/3" />
+                <Skeleton className="h-5 w-full" />
+                <Skeleton className="h-5 w-full" />
+                <div className="space-y-4 rounded-lg border bg-accent/50 p-4">
+                    <Skeleton className="h-10 w-full" />
+                </div>
+                <div>
+                  <Skeleton className="h-5 w-16 mb-2" />
+                  <div className="flex gap-2">
+                    <Skeleton className="h-10 w-10 rounded-md" />
+                    <Skeleton className="h-10 w-10 rounded-md" />
+                    <Skeleton className="h-10 w-10 rounded-md" />
+                  </div>
+                </div>
+                <Skeleton className="h-12 w-full md:w-48" />
+            </div>
+       </div>
+    </div>
+  )
+}
 
 export default function ProductPage() {
   const params = useParams();
   const productId = params.productId as string;
-  const product = products.find((p) => p.id === productId);
+  const firestore = useFirestore();
+
+  const productDocRef = useMemoFirebase(() => {
+    if (!firestore || !productId) return null;
+    return doc(firestore, 'products', productId);
+  }, [firestore, productId]);
+
+  const { data: product, isLoading: isProductLoading } = useDoc<Product>(productDocRef);
+
+  const relatedProductsQuery = useMemoFirebase(() => {
+    if (!firestore || !product) return null;
+    return query(
+      collection(firestore, 'products'),
+      where('category', '==', product.category),
+      where('gender', '==', product.gender),
+      where('__name__', '!=', product.id),
+      limit(4)
+    )
+  }, [firestore, product]);
+
+  const { data: relatedProducts, isLoading: areRelatedLoading } = useCollection<Product>(relatedProductsQuery);
 
   const { addItem } = useCart();
   const { toast } = useToast();
@@ -49,6 +111,9 @@ export default function ProductPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiDescription, setAiDescription] = useState('');
 
+  if (isProductLoading) {
+    return <ProductPageSkeleton />;
+  }
 
   if (!product) {
     notFound();
@@ -91,7 +156,6 @@ export default function ProductPage() {
   }
 
   const productImages = product.images.map(id => PlaceHolderImages.find(p => p.id === id)).filter(Boolean);
-  const relatedProducts = products.filter(p => p.category === product.category && p.gender === product.gender && p.id !== product.id).slice(0, 4);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -128,9 +192,9 @@ export default function ProductPage() {
                     ))}
                 </div>
                 <div className="relative aspect-[3/4] flex-1 rounded-lg overflow-hidden">
-                    {productImages[selectedImage] && (
+                    {productImages[selectedImage] ? (
                          <Image src={productImages[selectedImage]!.imageUrl} alt={product.name} fill className="object-cover" data-ai-hint={productImages[selectedImage]!.imageHint} />
-                    )}
+                    ) : <Skeleton className="h-full w-full" />}
                 </div>
             </div>
 
@@ -184,7 +248,8 @@ export default function ProductPage() {
         <div className="mt-24">
             <h2 className="text-2xl font-bold font-headline text-center mb-8">Related Products</h2>
              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
-                {relatedProducts.map(p => <ProductCard key={p.id} product={p} />)}
+                {areRelatedLoading && Array.from({length: 4}).map((_, i) => <Skeleton key={i} className="aspect-[3/4]" />)}
+                {relatedProducts && relatedProducts.map(p => <ProductCard key={p.id} product={p} />)}
             </div>
         </div>
     </div>

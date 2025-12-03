@@ -3,7 +3,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions for improved readability and reusability
     function isSignedIn() {
       return request.auth != null;
     }
@@ -11,48 +10,38 @@ service cloud.firestore {
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
+    
+    function isAdmin() {
+      // Allow if the user's UID is in the admins collection
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
 
-    /**
-     * @description User profile documents.
-     */
     match /users/{userId} {
       allow read, update: if isOwner(userId);
       allow create: if isOwner(userId);
       allow delete: if isOwner(userId);
+      allow list: if isAdmin();
 
-      /**
-       * @description User's shopping cart.
-       * @path /users/{userId}/cart/{cartDoc}
-       * @allow (read, write) Only the owner can access their cart.
-       */
       match /cart/{cartDoc} {
           allow read, write: if isOwner(userId);
       }
     }
 
-    /**
-     * @description Products collection.
-     * @path /products/{productId}
-     * @allow (get, list) Anyone can view products.
-     * @allow (create, update, delete) if false; // No admin write access for now
-     */
     match /products/{productId} {
       allow get, list: if true;
-      allow write: if false;
+      allow write: if isAdmin(); // Only admins can write to products
     }
     
-    /**
-     * @description Orders collection.
-     * @path /orders/{orderId}
-     * @allow (create) Any signed-in user can create an order for themselves.
-     * @allow (get) Owner can view their own orders.
-     * @deny (update, delete) Orders are immutable once created.
-     */
     match /orders/{orderId} {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow get: if resource.data.userId == request.auth.uid;
-      allow list: if false;
+      allow get: if resource.data.userId == request.auth.uid || isAdmin();
+      allow list: if isAdmin();
       allow update, delete: if false;
+    }
+    
+    match /admins/{userId} {
+        allow read: if isSignedIn();
+        allow write: if false; // Prevent client-side creation of admins
     }
   }
 }

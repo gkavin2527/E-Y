@@ -1,17 +1,43 @@
+'use client';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { products } from '@/lib/data';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ProductCard } from '@/components/product-card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, limit } from 'firebase/firestore';
+import type { Product } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
+
+
+function NewArrivalsSkeleton() {
+  return (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+          {Array.from({ length: 8 }).map((_, i) => (
+               <div key={i} className="space-y-2">
+                  <Skeleton className="aspect-[3/4]" />
+                  <Skeleton className="h-4 w-2/3" />
+                  <Skeleton className="h-4 w-1/3" />
+              </div>
+          ))}
+      </div>
+  )
+}
 
 export default function Home() {
-  const newArrivals = products.slice(0, 8);
   const heroImage = PlaceHolderImages.find(p => p.id === 'hero-1');
   const menCollectionImage = PlaceHolderImages.find(p => p.id === 'collection-men');
   const womenCollectionImage = PlaceHolderImages.find(p => p.id === 'collection-women');
-
+  
+  const firestore = useFirestore();
+  const productsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'products'), limit(8));
+  }, [firestore]);
+  
+  const { data: newArrivals, isLoading } = useCollection<Product>(productsQuery);
 
   return (
     <div className="space-y-12">
@@ -88,10 +114,15 @@ export default function Home() {
 
       <section className="container mx-auto px-4">
         <h2 className="text-3xl font-headline font-bold text-center">New Arrivals</h2>
-        <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
-          {newArrivals.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+        <div className="mt-8">
+          {isLoading && <NewArrivalsSkeleton />}
+          {!isLoading && newArrivals && (
+             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+                {newArrivals.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+            </div>
+          )}
         </div>
         <div className="text-center mt-8">
           <Button variant="outline" asChild>
