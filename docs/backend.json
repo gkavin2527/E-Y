@@ -263,7 +263,13 @@
     "providers": [
       "password",
       "anonymous"
-    ]
+    ],
+    "claims": {
+        "role": {
+            "type": "string",
+            "enum": ["admin", "customer"]
+        }
+    }
   },
   "firestore": {
     "structure": [
