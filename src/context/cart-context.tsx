@@ -104,7 +104,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             const docSnap = await getDoc(cartDocRef);
             if (docSnap.exists()) {
               const firestoreCart = (docSnap.data() as Cart).items || [];
-              // Merge with local cart
               const localCart = getLocalCart();
               const mergedCart = mergeCarts(firestoreCart, localCart);
               dispatch({ type: 'SET_CART', payload: mergedCart });
@@ -118,7 +117,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             }
           } catch (e) {
             console.error("Error loading cart from Firestore", e);
-             // Fallback to local storage if firestore fails
             const localCart = getLocalCart();
             dispatch({ type: 'SET_CART', payload: localCart });
           }
@@ -136,7 +134,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             const savedState = localStorage.getItem(LOCAL_STORAGE_KEY);
             if (!savedState) return [];
             const parsed = JSON.parse(savedState);
-            // Ensure we return an array, even if old data was malformed.
             return Array.isArray(parsed) ? parsed : [];
           } catch (error) {
             console.error('Failed to load cart from local storage', error);
@@ -212,10 +209,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     localCart.forEach(localItem => {
       const existingIndex = merged.findIndex(item => item.id === localItem.id);
       if (existingIndex > -1) {
-        // If item exists, sum quantities
         merged[existingIndex].quantity += localItem.quantity;
       } else {
-        // If item doesn't exist, add it
         merged.push(localItem);
       }
     });
