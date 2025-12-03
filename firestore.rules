@@ -1,0 +1,157 @@
+/**
+ * This ruleset enforces a security model for an e-commerce application.
+ *
+ * Core Philosophy:
+ * The security model is split into two distinct parts: a public, read-only product
+ * catalog and private, user-owned data. This provides a secure and performant
+ * foundation for the application.
+ *
+ * Data Structure:
+ * - The product catalog is structured hierarchically under /sections/{sectionId}/categories/{categoryId}/products/{productId}.
+ * - All user-specific data, such as profiles and shopping carts, is stored
+ *   privately under the /users/{userId} path, where {userId} corresponds to the
+ *   user's Firebase Authentication UID.
+ *
+ * Key Security Decisions:
+ * - Public Catalog: All product catalog data (`sections`, `categories`, `products`) is
+ *   publicly readable by any user, including anonymous ones, to allow for browsing.
+ * - Catalog Management: All write operations (`create`, `update`, `delete`) on the
+ *   product catalog are denied from the client-side. This is a critical security
+ *   measure that requires catalog management to be performed through a trusted
+ *   server environment (e.g., Cloud Functions with Admin SDK), preventing
+ *   unauthorized tampering with store data.
+ * - User Privacy: User profiles and carts are strictly private. A user can only
+ *   access their own data. Listing all users is explicitly disallowed to
+ *   protect user privacy.
+ * - Ownership Integrity: When creating documents within a user's private space
+ *   (e.g., a cart), the rules enforce that the document data contains a reference
+ *   ID back to the user, ensuring a consistent and unbreakable link of ownership.
+ *
+ * Denormalization for Authorization:
+ * This ruleset relies on path-based security for user-owned data. For example, a
+ * cart document under `/users/{userId}/carts/{cartId}` is secured by checking if
+ * the authenticated user's ID matches the `{userId}` in the path. Furthermore, the
+ * Cart document itself contains a `userProfileId` field. The rules ensure on
+ * creation that this `userProfileId` matches the `{userId}` in the path, creating
+ * a robust, denormalized link for ownership that avoids complex and slow `get()`
+ * calls in subcollection rules.
+ *
+ * Structural Segregation:
+ * The separation of the public catalog (top-level `sections` collection) from
+ * private user data (`users` collection) is a core design principle. This
+ * segregation simplifies rules, enhances security for private data, and improves
+ * performance for public listing operations.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for improved readability and reusability
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Checks for ownership on existing documents for update/delete operations.
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    // Validates that a user is creating their own profile and that the
+    // document ID is consistent with the user's UID.
+    function isCreatingOwnProfile(userId) {
+      return isOwner(userId) && request.resource.data.id == userId;
+    }
+
+    // Ensures the user ID within a profile document cannot be changed after creation.
+    function isProfileDataConsistent() {
+      return request.resource.data.id == resource.data.id;
+    }
+
+    // Validates that a user is creating a cart within their own space and that
+    // the cart's data links back to them.
+    function isCreatingOwnCart(userId) {
+      return isOwner(userId) && request.resource.data.userProfileId == userId;
+    }
+
+    // Ensures the user ID within a cart document cannot be changed after creation.
+    function isCartDataConsistent() {
+      return request.resource.data.userProfileId == resource.data.userProfileId;
+    }
+
+    /**
+     * @description Publicly readable store sections (e.g., Men, Women). Writes are disallowed.
+     * @path /sections/{sectionId}
+     * @allow (get) Any user, signed in or not, can read a store section.
+     * @deny (create) No client can create a new section. This must be done via a trusted server.
+     * @principle Public read-only data for the product catalog.
+     */
+    match /sections/{sectionId} {
+      allow get, list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+
+      /**
+       * @description Publicly readable product categories. Writes are disallowed.
+       * @path /sections/{sectionId}/categories/{categoryId}
+       * @allow (list) Any user, signed in or not, can list categories within a section.
+       * @deny (update) No client can update a category. This must be done via a trusted server.
+       * @principle Public read-only data for the product catalog.
+       */
+      match /categories/{categoryId} {
+        allow get, list: if true;
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
+
+        /**
+         * @description Publicly readable products. Writes are disallowed.
+         * @path /sections/{sectionId}/categories/{categoryId}/products/{productId}
+         * @allow (get) Any user, signed in or not, can view a product's details.
+         * @deny (delete) No client can delete a product. This must be done via a trusted server.
+         * @principle Public read-only data for the product catalog.
+         */
+        match /products/{productId} {
+          allow get, list: if true;
+          allow create: if false;
+          allow update: if false;
+          allow delete: if false;
+        }
+      }
+    }
+
+    /**
+     * @description User profile documents. Only accessible by the owner.
+     * @path /users/{userId}
+     * @allow (create) auth.uid == 'user_abc' can create a profile at /users/user_abc.
+     * @deny (get) auth.uid == 'user_xyz' cannot read the profile at /users/user_abc.
+     * @principle Restricts access to a user's own data tree and prevents user enumeration.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isCreatingOwnProfile(userId);
+      allow update: if isExistingOwner(userId) && isProfileDataConsistent();
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description User's shopping cart. Only accessible by the owner.
+       * @path /users/{userId}/carts/{cartId}
+       * @allow (get) auth.uid == 'user_abc' can read their own cart document.
+       * @deny (update) auth.uid == 'user_xyz' cannot modify user_abc's cart.
+       * @principle Enforces document ownership for all operations within a user's private data.
+       */
+      match /carts/{cartId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isCreatingOwnCart(userId);
+        allow update: if isExistingOwner(userId) && isCartDataConsistent();
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+  }
+}

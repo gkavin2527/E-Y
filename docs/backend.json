@@ -1,0 +1,274 @@
+{
+  "entities": {
+    "Product": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Product",
+      "type": "object",
+      "description": "Represents a product in the e-commerce store.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the product."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the product."
+        },
+        "price": {
+          "type": "number",
+          "description": "Price of the product."
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "Reference to Category. (Relationship: Category 1:N Product)"
+        },
+        "sizeOptions": {
+          "type": "array",
+          "description": "Available sizes for the product.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the product image.",
+          "format": "uri"
+        },
+        "description": {
+          "type": "string",
+          "description": "Short description of the product."
+        },
+        "rating": {
+          "type": "number",
+          "description": "Customer rating of the product."
+        },
+        "stockAvailability": {
+          "type": "boolean",
+          "description": "Indicates if the product is in stock."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "price",
+        "categoryId",
+        "sizeOptions",
+        "imageUrl",
+        "description",
+        "rating",
+        "stockAvailability"
+      ]
+    },
+    "Category": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Category",
+      "type": "object",
+      "description": "Represents a product category.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the category."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the category."
+        },
+        "sectionId": {
+          "type": "string",
+          "description": "Reference to Section. (Relationship: Section 1:N Category)"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "sectionId"
+      ]
+    },
+    "Section": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Section",
+      "type": "object",
+      "description": "Represents a section of the store (e.g., Men, Women).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the section."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the section."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user profile.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user profile."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "First name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "Last name of the user."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "firstName",
+        "lastName"
+      ]
+    },
+    "Cart": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Cart",
+      "type": "object",
+      "description": "Represents a shopping cart for a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the cart."
+        },
+        "userProfileId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:1 Cart)"
+        },
+        "productIds": {
+          "type": "array",
+          "description": "References to Products. (Relationship: Cart N:N Product)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "userProfileId",
+        "productIds"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "sections/{sectionId}",
+        "definition": {
+          "entityName": "Section",
+          "schema": {
+            "$ref": "#/entities/Section"
+          },
+          "description": "Represents a section of the store (e.g., Men, Women).",
+          "params": [
+            {
+              "name": "sectionId",
+              "description": "Unique identifier for the section."
+            }
+          ]
+        }
+      },
+      {
+        "path": "sections/{sectionId}/categories/{categoryId}",
+        "definition": {
+          "entityName": "Category",
+          "schema": {
+            "$ref": "#/entities/Category"
+          },
+          "description": "Represents a product category within a section.",
+          "params": [
+            {
+              "name": "sectionId",
+              "description": "Unique identifier for the section."
+            },
+            {
+              "name": "categoryId",
+              "description": "Unique identifier for the category."
+            }
+          ]
+        }
+      },
+      {
+        "path": "sections/{sectionId}/categories/{categoryId}/products/{productId}",
+        "definition": {
+          "entityName": "Product",
+          "schema": {
+            "$ref": "#/entities/Product"
+          },
+          "description": "Represents a product within a category. Includes denormalized 'categoryId' and 'sectionId' for authorization independence.",
+          "params": [
+            {
+              "name": "sectionId",
+              "description": "Unique identifier for the section."
+            },
+            {
+              "name": "categoryId",
+              "description": "Unique identifier for the category."
+            },
+            {
+              "name": "productId",
+              "description": "Unique identifier for the product."
+            }
+          ]
+        }
+      },
+      {
+        "path": "users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/entities/User"
+          },
+          "description": "Represents a user profile.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user.  This matches the Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "users/{userId}/carts/{cartId}",
+        "definition": {
+          "entityName": "Cart",
+          "schema": {
+            "$ref": "#/entities/Cart"
+          },
+          "description": "Represents a shopping cart for a user.  Owned by the user via the path.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user.  This matches the Firebase Auth UID."
+            },
+            {
+              "name": "cartId",
+              "description": "Unique identifier for the cart."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support an e-commerce application, mirroring the user interface and functionality requirements. It focuses on Products, Categories, Sections (Men, Women), User profiles, and Shopping Carts. The structure prioritizes authorization independence through data denormalization, ensuring that security rules are simple, robust, and easily debuggable.  Each entity follows a clear naming convention and consistent field naming for predictability and maintainability."
+  }
+}
