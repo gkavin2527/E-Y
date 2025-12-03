@@ -8,12 +8,13 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Star, StarHalf } from 'lucide-react';
+import { Star, StarHalf, Sparkles } from 'lucide-react';
 import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import Link from 'next/link';
 import { ProductCard } from '@/components/product-card';
+import { generateProductDescriptions } from '@/ai/flows/generate-product-descriptions';
 
 const ProductRating = ({ rating }: { rating: number }) => {
     const fullStars = Math.floor(rating);
@@ -43,6 +44,9 @@ export default function ProductPage({ params }: { params: { productId: string } 
   const { toast } = useToast();
   const [selectedSize, setSelectedSize] = useState<'S' | 'M' | 'L' | 'XL' | undefined>();
   const [selectedImage, setSelectedImage] = useState(0);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [aiDescription, setAiDescription] = useState('');
+
 
   if (!product) {
     notFound();
@@ -62,6 +66,27 @@ export default function ProductPage({ params }: { params: { productId: string } 
       description: `${product.name} (${selectedSize}) has been added to your cart.`,
     });
   };
+
+  const handleGenerateDescription = async () => {
+    setIsGenerating(true);
+    setAiDescription('');
+    try {
+        const result = await generateProductDescriptions({
+            productName: product.name,
+            searchHistory: "casual wear, summer fashion, comfortable tops" // Placeholder search history
+        });
+        setAiDescription(result.productDescription);
+    } catch(e) {
+        console.error(e);
+        toast({
+            variant: "destructive",
+            title: "Failed to generate description",
+            description: "There was a problem generating the AI description."
+        })
+    } finally {
+        setIsGenerating(false);
+    }
+  }
 
   const productImages = product.images.map(id => PlaceHolderImages.find(p => p.id === id)).filter(Boolean);
   const relatedProducts = products.filter(p => p.category === product.category && p.gender === product.gender && p.id !== product.id).slice(0, 4);
@@ -112,6 +137,19 @@ export default function ProductPage({ params }: { params: { productId: string } 
                 <p className="text-2xl font-semibold">${product.price.toFixed(2)}</p>
                 <ProductRating rating={product.rating} />
                 <p className="text-muted-foreground">{product.description}</p>
+
+                <div className="space-y-4 rounded-lg border bg-accent/50 p-4">
+                    <Button onClick={handleGenerateDescription} disabled={isGenerating} variant="outline" className="w-full bg-background hover:bg-background/90">
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        {isGenerating ? 'Generating...' : 'Generate AI Description'}
+                    </Button>
+                    {isGenerating && <p className="text-sm text-muted-foreground animate-pulse">Our fashion AI is crafting a description for you...</p>}
+                    {aiDescription && (
+                        <div className="prose prose-sm max-w-none text-accent-foreground">
+                            <p>{aiDescription}</p>
+                        </div>
+                    )}
+                </div>
                 
                 <div>
                     <h3 className="text-sm font-medium mb-2">Size</h3>
