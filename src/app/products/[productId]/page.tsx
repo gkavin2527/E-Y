@@ -116,8 +116,8 @@ export default function ProductPage({ params }: { params: { productId: string } 
                 <BreadcrumbItem><BreadcrumbPage>{product.name}</BreadcrumbPage></BreadcrumbItem>
             </BreadcrumbList>
         </Breadcrumb>
-        <div className="grid md:grid-cols-2 gap-12">
-            <div className="flex flex-col-reverse md:flex-row gap-4">
+        <div className="grid md:grid-cols-5 gap-12">
+            <div className="md:col-span-3 flex flex-col-reverse md:flex-row gap-4">
                 <div className="flex md:flex-col gap-2">
                     {productImages.map((img, index) => img && (
                         <button key={img.id} onClick={() => setSelectedImage(index)} className={`relative h-20 w-20 md:h-24 md:w-24 rounded-lg overflow-hidden border-2 ${selectedImage === index ? 'border-primary' : 'border-transparent'}`}>
@@ -132,7 +132,7 @@ export default function ProductPage({ params }: { params: { productId: string } 
                 </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="md:col-span-2 space-y-6">
                 <h1 className="text-3xl font-bold font-headline">{product.name}</h1>
                 <p className="text-2xl font-semibold">${product.price.toFixed(2)}</p>
                 <ProductRating rating={product.rating} />
