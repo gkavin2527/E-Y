@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth, useFirestore } from '@/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import type { UserProfile } from '@/lib/types';
 
 export default function SignupPage() {
   const [firstName, setFirstName] = useState('');
@@ -34,15 +35,15 @@ export default function SignupPage() {
       const user = userCredential.user;
 
       const userDocRef = doc(firestore, 'users', user.uid);
-      const userData = {
+      const userData: UserProfile = {
         id: user.uid,
         firstName,
         lastName,
-        email: user.email,
+        email: user.email!,
+        role: 'customer', // Assign default role
       };
 
-      // We are not awaiting this to avoid blocking UI, error is handled globally
-      setDoc(userDocRef, userData);
+      await setDoc(userDocRef, userData);
 
       toast({
         title: 'Account Created',

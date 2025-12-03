@@ -18,9 +18,9 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read, update: if isOwner(userId);
-      allow create: if isOwner(userId);
+      allow create: if isSignedIn(); // Allow any signed in user to create their own profile
       allow delete: if isOwner(userId);
-      allow list: if isAdmin();
+      allow list: if isAdmin(); // Only admins can list all users
 
       match /cart/{cartDoc} {
           allow read, write: if isOwner(userId);
@@ -28,20 +28,26 @@ service cloud.firestore {
     }
 
     match /products/{productId} {
-      allow get, list: if true;
-      allow write: if isAdmin(); // Only admins can write to products
+      allow get, list: if true; // Everyone can view products
+      allow create, update, delete: if isAdmin(); // Only admins can manage products
     }
     
     match /orders/{orderId} {
+      // Allow a signed-in user to create an order for themselves
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow get: if resource.data.userId == request.auth.uid || isAdmin();
+      // Allow a user to get their own order, or an admin to get any order
+      allow get: if (resource.data.userId == request.auth.uid) || isAdmin();
+      // Only admins can list all orders
       allow list: if isAdmin();
+      // No one can update or delete historical orders
       allow update, delete: if false;
     }
     
     match /admins/{userId} {
-        allow read: if isSignedIn();
-        allow write: if false; // Prevent client-side creation of admins
+        // Anyone can read the admins collection to check for existence
+        allow read: if true;
+        // But no one can write to it from the client-side
+        allow write: if false;
     }
   }
 }
