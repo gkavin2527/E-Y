@@ -2,9 +2,7 @@ import { notFound } from 'next/navigation';
 import { categories, genders } from '@/lib/data';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Card, CardContent } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { ArrowRight } from 'lucide-react';
 
 export default function GenderPage({ params }: { params: { gender: string } }) {
   const { gender } = params;
@@ -42,28 +40,24 @@ export default function GenderPage({ params }: { params: { gender: string } }) {
             const categoryImage = PlaceHolderImages.find(p => p.id === category.image);
             return (
               <Link href={`/${gender}/${category.slug}`} key={category.slug} className="group">
-                <Card className="overflow-hidden">
-                  <CardContent className="p-0">
-                    <div className="relative aspect-video">
-                      {categoryImage && (
-                        <Image
-                          src={categoryImage.imageUrl}
-                          alt={category.name}
-                          fill
-                          className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          data-ai-hint={categoryImage.imageHint}
-                        />
-                      )}
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold flex items-center justify-between">
+                <div className="relative aspect-[3/4] overflow-hidden rounded-lg">
+                  {categoryImage && (
+                    <Image
+                      src={categoryImage.imageUrl}
+                      alt={category.name}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      data-ai-hint={categoryImage.imageHint}
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <h3 className="font-headline text-lg font-semibold text-white">
                         {category.name}
-                        <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform duration-300 group-hover:translate-x-1" />
                       </h3>
-                      <p className="text-sm text-muted-foreground mt-1">{category.description}</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                      <p className="text-sm text-white/80 mt-1">{category.description}</p>
+                  </div>
+                </div>
               </Link>
             );
           })}
