@@ -8,13 +8,15 @@ import { useFirestore } from '@/firebase';
 import { doc, setDoc, addDoc, deleteDoc, collection } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import type { Product } from '@/lib/types';
+import { PlaceHolderImages, type ImagePlaceholder } from '@/lib/placeholder-images';
+import { Check } from 'lucide-react';
 
 const productSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters.'),
