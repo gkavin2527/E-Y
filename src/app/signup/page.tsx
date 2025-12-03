@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -8,9 +9,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth, useFirestore } from '@/firebase';
+import { useAuth, useFirestore, setDocumentNonBlocking } from '@/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 
 export default function SignupPage() {
   const [firstName, setFirstName] = useState('');
@@ -32,12 +33,16 @@ export default function SignupPage() {
       const user = userCredential.user;
 
       // Create a user profile document in Firestore
-      await setDoc(doc(firestore, 'users', user.uid), {
+      const userDocRef = doc(firestore, 'users', user.uid);
+      const userData = {
         id: user.uid,
         firstName,
         lastName,
         email: user.email,
-      });
+      };
+      
+      setDocumentNonBlocking(userDocRef, userData, { merge: true });
+
 
       toast({
         title: 'Account Created',
