@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -14,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useCollection, useFirestore } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import type { Order, Product, UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -61,15 +62,23 @@ function StatCard({
 
 export default function Dashboard() {
   const firestore = useFirestore();
-  const { data: orders, isLoading: areOrdersLoading } = useCollection<Order>(
-    firestore ? collection(firestore, 'orders') : null
+
+  const ordersQuery = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'orders') : null),
+    [firestore]
   );
-  const { data: products, isLoading: areProductsLoading } = useCollection<Product>(
-    firestore ? collection(firestore, 'products') : null
+  const productsQuery = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'products') : null),
+    [firestore]
   );
-  const { data: users, isLoading: areUsersLoading } = useCollection<UserProfile>(
-    firestore ? collection(firestore, 'users') : null
+  const usersQuery = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'users') : null),
+    [firestore]
   );
+
+  const { data: orders, isLoading: areOrdersLoading } = useCollection<Order>(ordersQuery);
+  const { data: products, isLoading: areProductsLoading } = useCollection<Product>(productsQuery);
+  const { data: users, isLoading: areUsersLoading } = useCollection<UserProfile>(usersQuery);
 
   const totalRevenue = orders?.reduce((sum, order) => sum + order.total, 0) || 0;
   const totalSales = orders?.length || 0;
