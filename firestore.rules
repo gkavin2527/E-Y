@@ -1,28 +1,4 @@
 
-/**
- * This ruleset enforces a security model for an e-commerce application.
- *
- * Core Philosophy:
- * The security model is split into two distinct parts: a public, read-only product
- * catalog and private, user-owned data. Admins have elevated privileges.
- *
- * Data Structure:
- * - Products are in a top-level `products` collection for easier management.
- * - All user-specific data is stored under `/users/{userId}`.
- * - Orders are in a top-level `orders` collection so admins can list them.
- * - Admin users are identified by their UID existing in the `admins` collection.
- *
- * Key Security Decisions:
- * - Public Read: All product data is publicly readable for browsing.
- * - Admin-Only Writes: All write operations on products are restricted to admins.
- * - User Privacy: User profiles and carts are strictly private. A user can only
- *   access their own data.
- * - Order Access: Users can only read their own orders. Admins can read all orders.
- *
- * Authorization:
- * This ruleset uses a dedicated `admins` collection to determine admin status.
- * An admin is any signed-in user whose UID exists as a document ID in `/admins`.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -36,27 +12,13 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isAdmin() {
-      // An admin is a signed-in user whose UID exists as a document
-      // in the top-level 'admins' collection. This is a secure and performant check.
-      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
-    }
-
     /**
      * @description User profile documents.
-     * @path /users/{userId}
-     * @allow (get) Owner or an admin can read a user profile.
-     * @allow (list) Admins can list users. This is a key rule for the admin panel.
-     * @allow (create) New users can create their own profile with a 'customer' role.
-     * @allow (update) Owner can update their profile. Admins can update any profile (e.g. to change role).
-     * @allow (delete) Admins can delete users.
      */
     match /users/{userId} {
-      allow get: if isOwner(userId) || isAdmin();
-      allow list: if isAdmin();
-      allow create: if isOwner(userId) && request.resource.data.role == 'customer';
-      allow update: if isOwner(userId) || isAdmin();
-      allow delete: if isAdmin();
+      allow read, update: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow delete: if isOwner(userId);
 
       /**
        * @description User's shopping cart.
@@ -72,35 +34,25 @@ service cloud.firestore {
      * @description Products collection.
      * @path /products/{productId}
      * @allow (get, list) Anyone can view products.
-     * @allow (create, update, delete) Only admins can manage the product catalog.
+     * @allow (create, update, delete) if false; // No admin write access for now
      */
     match /products/{productId} {
       allow get, list: if true;
-      allow write: if isAdmin();
+      allow write: if false;
     }
     
     /**
      * @description Orders collection.
      * @path /orders/{orderId}
      * @allow (create) Any signed-in user can create an order for themselves.
-     * @allow (get, list) Owner can view their own orders. Admins can view all orders.
+     * @allow (get) Owner can view their own orders.
      * @deny (update, delete) Orders are immutable once created.
      */
     match /orders/{orderId} {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow get: if (resource.data.userId == request.auth.uid) || isAdmin();
-      allow list: if isAdmin();
+      allow get: if resource.data.userId == request.auth.uid;
+      allow list: if false;
       allow update, delete: if false;
-    }
-
-    /**
-     * @description Admins collection.
-     * @path /admins/{userId}
-     * @allow (read, list) Restricted to admins for auditing purposes.
-     * @allow (write) Restricted to admins to manage other admins.
-     */
-    match /admins/{userId} {
-        allow read, write, list: if isAdmin();
     }
   }
 }

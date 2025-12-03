@@ -59,5 +59,4 @@ export type UserProfile = {
     firstName: string;
     lastName: string;
     email: string;
-    role: 'admin' | 'customer';
 };

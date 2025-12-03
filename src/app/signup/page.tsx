@@ -39,7 +39,6 @@ export default function SignupPage() {
         firstName,
         lastName,
         email: user.email,
-        role: 'customer', // Assign default role
       };
 
       // We are not awaiting this to avoid blocking UI, error is handled globally

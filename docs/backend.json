@@ -126,17 +126,11 @@
         "lastName": {
           "type": "string",
           "description": "Last name of the user."
-        },
-        "role": {
-          "type": "string",
-          "enum": ["admin", "customer"],
-          "description": "The user's role in the system."
         }
       },
       "required": [
         "id",
-        "email",
-        "role"
+        "email"
       ]
     },
     "CartItem": {
@@ -257,12 +251,6 @@
         "total",
         "items"
       ]
-    },
-    "AdminUser": {
-        "title": "Admin User",
-        "description": "A document representing an admin user. The document ID is the user's UID.",
-        "type": "object",
-        "properties": {}
     }
   },
   "auth": {
@@ -371,18 +359,6 @@
               "description": "Unique identifier for the order."
             }
           ]
-        }
-      },
-      {
-        "path": "admins/{userId}",
-        "definition": {
-            "entityName": "AdminUser",
-            "schema": { "$ref": "#/entities/AdminUser"},
-            "description": "A collection where each document ID is the UID of an admin user. Used for security rules.",
-            "params": [{
-                "name": "userId",
-                "description": "The UID of the admin user."
-            }]
         }
       }
     ],

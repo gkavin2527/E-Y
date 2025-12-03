@@ -3,7 +3,7 @@
 
 import { MainNav } from './main-nav';
 import { Button } from '../ui/button';
-import { LogOut, Search, ShoppingBag, User, Shield } from 'lucide-react';
+import { LogOut, Search, ShoppingBag, User } from 'lucide-react';
 import { useCart } from '@/hooks/use-cart';
 import {
   Sheet,
@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { CartSheet } from '../cart-sheet';
 import Link from 'next/link';
-import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useUser, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -36,7 +36,6 @@ import {
 import { Input } from '../ui/input';
 import { useRouter } from 'next/navigation';
 import React from 'react';
-import { doc } from 'firebase/firestore';
 
 
 const SearchDialog = () => {
@@ -76,15 +75,7 @@ const SearchDialog = () => {
 const UserButton = () => {
     const { user, isUserLoading } = useUser();
     const auth = useAuth();
-    const firestore = useFirestore();
     const { toast } = useToast();
-  
-    const adminDocRef = useMemoFirebase(
-      () => (firestore && user ? doc(firestore, 'admins', user.uid) : null),
-      [firestore, user]
-    );
-  
-    const { data: adminDoc, isLoading: isAdminDocLoading } = useDoc(adminDocRef);
   
     const handleLogout = async () => {
       if (!auth) return;
@@ -111,7 +102,7 @@ const UserButton = () => {
       return 'U';
     };
 
-    if (isUserLoading || (user && isAdminDocLoading)) {
+    if (isUserLoading) {
         return <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />;
     }
 
@@ -138,14 +129,6 @@ const UserButton = () => {
             <DropdownMenuContent align="end">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {adminDoc && (
-                    <DropdownMenuItem asChild>
-                        <Link href="/admin" className="flex items-center gap-2">
-                           <Shield className="h-4 w-4" /> 
-                           <span>Admin Panel</span>
-                        </Link>
-                    </DropdownMenuItem>
-                )}
                 <DropdownMenuItem asChild>
                     <Link href="/account/profile">Profile</Link>
                 </DropdownMenuItem>
