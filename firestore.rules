@@ -56,11 +56,11 @@ service cloud.firestore {
      * @allow (get) Owner or an admin can read a user profile.
      * @allow (create) New users can create their own profile with a 'customer' role.
      * @allow (update) Owner can update their profile. Admins can update any profile (e.g. to change role).
-     * @deny (list) Listing users is disallowed to protect privacy.
+     * @allow (list) Admins can list users.
      */
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin(request.auth.uid);
-      allow list: if false; // prevent user enumeration
+      allow list: if isAdmin(request.auth.uid);
       allow create: if isCreatingOwnProfile(userId) && request.resource.data.role == 'customer';
       allow update: if isOwner(userId) || isAdmin(request.auth.uid);
       allow delete: if isAdmin(request.auth.uid);
