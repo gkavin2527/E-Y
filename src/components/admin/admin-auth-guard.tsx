@@ -22,21 +22,25 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
   const isLoading = isUserLoading || isAdminDocLoading;
 
   useEffect(() => {
-    if (isLoading) return; // Wait for user and admin doc to load
+    // Wait until all loading is complete before running any redirection logic
+    if (isLoading) {
+      return;
+    }
 
+    // If loading is done and there's no user, redirect to login.
     if (!user) {
-      router.replace('/login'); // Not logged in, redirect to login
+      router.replace('/login?redirect=/admin');
       return;
     }
     
-    // If the admin document doesn't exist, they are not an admin.
+    // If loading is done, we have a user, but they are not in the admins collection.
     if (!adminDoc) {
-      router.replace('/'); // Not an admin, redirect to home
+      router.replace('/'); // Redirect to home page if not an admin
     }
   }, [user, adminDoc, isLoading, router]);
 
-  // While loading, or if the user is not a verified admin, show a loading state.
-  if (isLoading || !adminDoc) {
+  // While loading, or if the checks haven't completed, show a loading state.
+  if (isLoading) {
     return (
         <div className="flex h-screen w-full items-center justify-center">
             <div className="p-8 space-y-4">
@@ -49,6 +53,21 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If loading is complete and user is an admin, render the children.
-  return <>{children}</>;
+  // If loading is complete and the user is a verified admin (adminDoc exists), render the children.
+  // The useEffect above handles the redirection for non-admins.
+  if (adminDoc) {
+    return <>{children}</>;
+  }
+
+  // Fallback loading state for any edge cases before redirection happens.
+  return (
+    <div className="flex h-screen w-full items-center justify-center">
+      <div className="p-8 space-y-4">
+        <h2 className="text-2xl font-semibold">Verifying Admin Access...</h2>
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+      </div>
+    </div>
+  );
 }
