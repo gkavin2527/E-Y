@@ -52,9 +52,10 @@ service cloud.firestore {
      * @description User profile documents.
      * @path /users/{userId}
      * @allow (get) Owner or an admin can read a user profile.
+     * @allow (list) Admins can list users. This is a key rule for the admin panel.
      * @allow (create) New users can create their own profile with a 'customer' role.
      * @allow (update) Owner can update their profile. Admins can update any profile (e.g. to change role).
-     * @allow (list) Admins can list users. This is a key rule for the admin panel.
+     * @allow (delete) Admins can delete users.
      */
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();

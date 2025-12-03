@@ -37,6 +37,7 @@ import { Input } from '../ui/input';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 import { doc } from 'firebase/firestore';
+import type { UserProfile } from '@/lib/types';
 
 
 const SearchDialog = () => {
@@ -84,9 +85,10 @@ const UserButton = () => {
       [firestore, user]
     );
   
-    const { data: userProfile, isLoading: isProfileLoading } = useDoc<{role: string}>(userDocRef);
+    const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
   
     const handleLogout = async () => {
+      if (!auth) return;
       try {
         await signOut(auth);
         toast({
