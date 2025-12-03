@@ -10,7 +10,7 @@ export function SiteFooter() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
             <Link href="/" className="flex items-center space-x-2">
-                <span className="font-bold text-xl font-headline">Threads</span>
+                <span className="font-bold text-xl font-headline">E&Y</span>
             </Link>
             <p className="text-sm text-muted-foreground">Effortless style for the modern individual.</p>
           </div>
@@ -44,7 +44,7 @@ export function SiteFooter() {
           </div>
         </div>
         <div className="border-t mt-8 pt-6 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Threads. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} E&Y. All rights reserved.</p>
         </div>
       </div>
     </footer>

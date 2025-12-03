@@ -14,7 +14,6 @@ import { Menu, Package2, Image as ImageIcon } from 'lucide-react';
 const navLinks = [
     { href: '/admin', label: 'Dashboard' },
     { href: '/admin/products', label: 'Products' },
-    { href: '/admin/image-studio', label: 'AI Image Studio' },
 ];
 
 export function MainNav() {
@@ -51,8 +50,7 @@ export function MainNav() {
                     href="/"
                     className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
                 >
-                    <Package2 className="h-5 w-5 transition-all group-hover:scale-110" />
-                    <span className="sr-only">Threads</span>
+                    <span className="sr-only">E&Y</span>
                 </Link>
                 {navLinks.map(renderLink)}
             </nav>
@@ -60,8 +58,7 @@ export function MainNav() {
         </Sheet>
         <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
             <Link href="/" className="flex items-center gap-2 font-semibold">
-                <Package2 className="h-6 w-6" />
-                <span>Threads Admin</span>
+                <span>E&Y Admin</span>
             </Link>
             {navLinks.map(renderLink)}
         </nav>
