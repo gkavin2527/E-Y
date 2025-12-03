@@ -3,7 +3,7 @@
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Loader2 } from 'lucide-react';
 
@@ -19,34 +19,28 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
   
   const { data: adminDoc, isLoading: isAdminDocLoading } = useDoc(adminDocRef);
 
-  const [authStatus, setAuthStatus] = useState<'loading' | 'allowed' | 'denied'>('loading');
-
   useEffect(() => {
-    const isChecking = isUserLoading || isAdminDocLoading;
-
-    if (isChecking) {
-      setAuthStatus('loading');
+    // Wait until both user and admin status are fully loaded
+    if (isUserLoading || isAdminDocLoading) {
       return;
     }
 
+    // If loading is finished and there's no user, redirect to login
     if (!user) {
-      // Not logged in at all, deny and redirect
-      setAuthStatus('denied');
       router.replace('/login?redirect=/admin');
       return;
     }
 
-    if (adminDoc) {
-      // User is logged in and their UID exists in the 'admins' collection
-      setAuthStatus('allowed');
-    } else {
-      // Logged in, but not an admin
-      setAuthStatus('denied');
-      router.replace('/'); // Redirect non-admins to the homepage
+    // If loading is finished, there IS a user, but they are not an admin, redirect to homepage
+    if (!adminDoc) {
+      router.replace('/');
     }
   }, [user, isUserLoading, adminDoc, isAdminDocLoading, router]);
 
-  if (authStatus === 'loading') {
+  const isChecking = isUserLoading || isAdminDocLoading;
+  const isAllowed = user && adminDoc;
+
+  if (isChecking) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-background">
         <Card className="w-[350px]">
@@ -61,7 +55,7 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (authStatus === 'allowed') {
+  if (isAllowed) {
     return <>{children}</>;
   }
 
