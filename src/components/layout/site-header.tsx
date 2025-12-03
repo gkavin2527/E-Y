@@ -37,7 +37,6 @@ import { Input } from '../ui/input';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 import { doc } from 'firebase/firestore';
-import type { UserProfile } from '@/lib/types';
 
 
 const SearchDialog = () => {
@@ -80,12 +79,12 @@ const UserButton = () => {
     const firestore = useFirestore();
     const { toast } = useToast();
   
-    const userDocRef = useMemoFirebase(
-      () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
+    const adminDocRef = useMemoFirebase(
+      () => (firestore && user ? doc(firestore, 'admins', user.uid) : null),
       [firestore, user]
     );
   
-    const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
+    const { data: adminDoc, isLoading: isAdminDocLoading } = useDoc(adminDocRef);
   
     const handleLogout = async () => {
       if (!auth) return;
@@ -112,7 +111,7 @@ const UserButton = () => {
       return 'U';
     };
 
-    if (isUserLoading || (user && isProfileLoading)) {
+    if (isUserLoading || (user && isAdminDocLoading)) {
         return <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />;
     }
 
@@ -139,7 +138,7 @@ const UserButton = () => {
             <DropdownMenuContent align="end">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {userProfile?.role === 'admin' && (
+                {adminDoc && (
                     <DropdownMenuItem asChild>
                         <Link href="/admin" className="flex items-center gap-2">
                            <Shield className="h-4 w-4" /> 
