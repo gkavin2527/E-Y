@@ -2,7 +2,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import { PlusCircle } from 'lucide-react';
-import { useCollection, useFirestore } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Product } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,13 @@ import { ProductDialog } from '@/components/admin/product-dialog';
 
 export default function AdminProductsPage() {
   const firestore = useFirestore();
-  const { data: products, isLoading } = useCollection<Product>(firestore ? collection(firestore, 'products') : null);
+
+  const productsQuery = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'products') : null),
+    [firestore]
+  );
+  
+  const { data: products, isLoading } = useCollection<Product>(productsQuery);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [selectedProduct, setSelectedProduct] = React.useState<Product | undefined>(undefined);
 
