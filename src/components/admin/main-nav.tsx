@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Package, Users, LineChart } from 'lucide-react';
+import { Home, Package, Users, LineChart, Image as ImageIcon } from 'lucide-react';
 import { Icons } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import {
@@ -15,6 +15,7 @@ import { PanelLeft } from 'lucide-react';
 const navLinks = [
     { href: '/admin', label: 'Dashboard', icon: Home },
     { href: '/admin/products', label: 'Products', icon: Package },
+    { href: '/admin/image-studio', label: 'AI Image Studio', icon: ImageIcon },
 ];
 
 export function MainNav() {
