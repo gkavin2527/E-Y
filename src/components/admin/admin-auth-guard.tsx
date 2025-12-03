@@ -4,7 +4,7 @@
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Loader2 } from 'lucide-react';
 
@@ -33,52 +33,41 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
     [firestore, user]
   );
 
-  const { data: adminDoc, isLoading: isAdminDocLoading, error: adminDocError } = useDoc(adminDocRef);
-
-  // LOGGING STEP 1: Log initial hook values
-  console.log('[AdminGuard] State update:', {
-    isUserLoading,
-    user: user ? { uid: user.uid, email: user.email } : null,
-    isAdminDocLoading,
-    adminDocExists: adminDoc ? true : false,
-    adminDocError: adminDocError ? adminDocError.message : null,
-  });
+  const { data: adminDoc, isLoading: isAdminDocLoading } = useDoc(adminDocRef);
 
   useEffect(() => {
-    // This effect handles the redirection logic
-    const isDataLoading = isUserLoading || isAdminDocLoading;
-    if (isDataLoading) {
-      // LOGGING STEP 2: Log that we are waiting for data
-      console.log('[AdminGuard] Waiting for data to load...');
+    // Wait until both user and admin status are fully loaded
+    if (isUserLoading || isAdminDocLoading) {
       return; // Do nothing while loading
     }
-    
-    // Once loading is complete, decide what to do
-    const isAllowed = user && adminDoc;
-    
-    // LOGGING STEP 3: Log the final decision
-    console.log(`[AdminGuard] Decision: isAllowed = ${isAllowed}. Redirecting? ${!isAllowed}`);
 
-    if (!isAllowed) {
-        if (!user) {
-            router.replace('/login?redirect=/admin');
-        } else {
-            router.replace('/');
-        }
+    // If there's no user, redirect to login
+    if (!user) {
+      router.replace('/login?redirect=/admin');
+      return;
     }
+
+    // If there is a user but they are not in the admin document, redirect to home
+    if (!adminDoc) {
+      router.replace('/');
+      return;
+    }
+
   }, [user, adminDoc, isUserLoading, isAdminDocLoading, router]);
 
-  const isDataLoading = isUserLoading || isAdminDocLoading;
+  // Determine if the user is allowed
   const isAllowed = user && adminDoc;
   
-  if (isDataLoading) {
+  // Show loading screen while we wait for any data
+  if (isUserLoading || isAdminDocLoading) {
     return <LoadingScreen />;
   }
   
+  // If allowed, show the content
   if (isAllowed) {
     return <>{children}</>;
   }
 
-  // Render the loading screen during the brief moment of redirection
+  // Otherwise, show loading screen during the brief moment of redirection
   return <LoadingScreen />;
 }
