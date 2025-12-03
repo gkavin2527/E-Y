@@ -53,3 +53,11 @@ export type Order = {
   total: number;
   items: OrderItem[];
 };
+
+export type UserProfile = {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: 'admin' | 'customer';
+};

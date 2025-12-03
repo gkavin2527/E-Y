@@ -2,9 +2,9 @@
 'use client';
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import type { Order } from '@/lib/types';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ShoppingBag } from 'lucide-react';
@@ -36,7 +36,7 @@ export default function OrdersPage() {
   const firestore = useFirestore();
 
   const ordersQuery = useMemoFirebase(
-    () => (firestore && user ? query(collection(firestore, 'users', user.uid, 'orders'), orderBy('createdAt', 'desc')) : null),
+    () => (firestore && user ? query(collection(firestore, 'orders'), where('userId', '==', user.uid)) : null),
     [firestore, user]
   );
 

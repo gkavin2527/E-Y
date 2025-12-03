@@ -39,9 +39,11 @@ export default function SignupPage() {
         firstName,
         lastName,
         email: user.email,
+        role: 'customer', // Assign default role
       };
 
-      await setDoc(userDocRef, userData);
+      // We are not awaiting this to avoid blocking UI, error is handled globally
+      setDoc(userDocRef, userData);
 
       toast({
         title: 'Account Created',

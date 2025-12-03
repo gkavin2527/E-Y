@@ -3,7 +3,7 @@
 
 import { MainNav } from './main-nav';
 import { Button } from '../ui/button';
-import { LogOut, Search, ShoppingBag, User } from 'lucide-react';
+import { LogOut, Search, ShoppingBag, User, Shield } from 'lucide-react';
 import { useCart } from '@/hooks/use-cart';
 import {
   Sheet,
@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { CartSheet } from '../cart-sheet';
 import Link from 'next/link';
-import { useUser, useAuth } from '@/firebase';
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -36,6 +36,7 @@ import {
 import { Input } from '../ui/input';
 import { useRouter } from 'next/navigation';
 import React from 'react';
+import { doc } from 'firebase/firestore';
 
 
 const SearchDialog = () => {
@@ -72,39 +73,97 @@ const SearchDialog = () => {
   )
 }
 
+const UserButton = () => {
+    const { user, isUserLoading } = useUser();
+    const auth = useAuth();
+    const firestore = useFirestore();
+    const { toast } = useToast();
+  
+    const userDocRef = useMemoFirebase(
+      () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
+      [firestore, user]
+    );
+  
+    const { data: userProfile, isLoading: isProfileLoading } = useDoc<{role: string}>(userDocRef);
+  
+    const handleLogout = async () => {
+      try {
+        await signOut(auth);
+        toast({
+          title: 'Logged Out',
+          description: 'You have been successfully logged out.',
+        });
+      } catch (error) {
+        console.error('Logout Error:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Logout Failed',
+          description: 'There was a problem logging you out.',
+        });
+      }
+    };
+  
+    const getInitials = () => {
+      if (user?.email) {
+        return user.email[0].toUpperCase();
+      }
+      return 'U';
+    };
+
+    if (isUserLoading || (user && isProfileLoading)) {
+        return <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />;
+    }
+
+    if (!user) {
+        return (
+            <Button variant="ghost" size="icon" aria-label="Login" asChild>
+                <Link href="/login">
+                <User className="h-5 w-5" />
+                </Link>
+            </Button>
+        )
+    }
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="User Profile">
+                    <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? "user photo"} />
+                    <AvatarFallback>{getInitials()}</AvatarFallback>
+                </Avatar>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {userProfile?.role === 'admin' && (
+                    <DropdownMenuItem asChild>
+                        <Link href="/admin" className="flex items-center gap-2">
+                           <Shield className="h-4 w-4" /> 
+                           <span>Admin Panel</span>
+                        </Link>
+                    </DropdownMenuItem>
+                )}
+                <DropdownMenuItem asChild>
+                    <Link href="/account/profile">Profile</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link href="/account/orders">Orders</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
+                <LogOut className="h-4 w-4" />
+                <span>Logout</span>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    )
+}
+
 export function SiteHeader() {
   const { totalItems } = useCart();
-  const { user, isUserLoading } = useUser();
-  const auth = useAuth();
-  const { toast } = useToast();
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      toast({
-        title: 'Logged Out',
-        description: 'You have been successfully logged out.',
-      });
-      // You might want to redirect the user after logout
-      // router.push('/');
-    } catch (error) {
-      console.error('Logout Error:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Logout Failed',
-        description: 'There was a problem logging you out.',
-      });
-    }
-  };
-
-  const getInitials = () => {
-    if (user?.email) {
-      return user.email[0].toUpperCase();
-    }
-    return 'U';
-  }
-
-
+  
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
@@ -112,43 +171,7 @@ export function SiteHeader() {
         <div className="flex flex-1 items-center justify-end space-x-4">
           <nav className="flex items-center space-x-1">
             <SearchDialog />
-            
-            {isUserLoading ? (
-              <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
-            ) : user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label="User Profile">
-                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? "user photo"} />
-                      <AvatarFallback>{getInitials()}</AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/account/profile">Profile</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                     <Link href="/account/orders">Orders</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
-                    <LogOut className="h-4 w-4" />
-                    <span>Logout</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-               <Button variant="ghost" size="icon" aria-label="Login" asChild>
-                  <Link href="/login">
-                    <User className="h-5 w-5" />
-                  </Link>
-              </Button>
-            )}
-
+            <UserButton />
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" aria-label="Shopping Cart" className="relative">

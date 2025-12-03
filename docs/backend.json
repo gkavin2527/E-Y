@@ -126,11 +126,17 @@
         "lastName": {
           "type": "string",
           "description": "Last name of the user."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin", "customer"],
+          "description": "The user's role in the system."
         }
       },
       "required": [
         "id",
-        "email"
+        "email",
+        "role"
       ]
     },
     "CartItem": {
@@ -298,22 +304,14 @@
         }
       },
       {
-        "path": "sections/{sectionId}/categories/{categoryId}/products/{productId}",
+        "path": "products/{productId}",
         "definition": {
           "entityName": "Product",
           "schema": {
             "$ref": "#/entities/Product"
           },
-          "description": "Represents a product within a category. Includes denormalized 'categoryId' and 'sectionId' for authorization independence.",
+          "description": "Represents a product. Products are in a top-level collection for easier querying by admins.",
           "params": [
-            {
-              "name": "sectionId",
-              "description": "Unique identifier for the section."
-            },
-            {
-              "name": "categoryId",
-              "description": "Unique identifier for the category."
-            },
             {
               "name": "productId",
               "description": "Unique identifier for the product."
@@ -354,18 +352,14 @@
         }
       },
       {
-        "path": "users/{userId}/orders/{orderId}",
+        "path": "orders/{orderId}",
         "definition": {
           "entityName": "Order",
           "schema": {
             "$ref": "#/entities/Order"
           },
-          "description": "Represents a historical order for a user.",
+          "description": "Represents a historical order for any user. Stored in a root collection for admin access.",
           "params": [
-            {
-              "name": "userId",
-              "description": "The ID of the user who owns the order."
-            },
             {
               "name": "orderId",
               "description": "Unique identifier for the order."
