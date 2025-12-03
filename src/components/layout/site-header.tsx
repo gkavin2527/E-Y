@@ -1,3 +1,4 @@
+
 'use client';
 
 import { MainNav } from './main-nav';
@@ -49,9 +50,20 @@ export function SiteHeader() {
     }
   };
 
-  const getInitials = (name: string | null | undefined) => {
-    if (!name) return 'U';
-    return name.split(' ').map(n => n[0]).join('');
+  const getInitials = (firstName?: string, lastName?: string) => {
+    if (firstName && lastName) {
+        return `${firstName[0]}${lastName[0]}`;
+    }
+    if (firstName) {
+        return firstName[0];
+    }
+    if (user?.displayName) {
+      return user.displayName.split(' ').map(n => n[0]).join('');
+    }
+    if(user?.email) {
+      return user.email[0].toUpperCase();
+    }
+    return 'U';
   }
 
 
@@ -73,7 +85,7 @@ export function SiteHeader() {
                   <Button variant="ghost" size="icon" aria-label="User Profile">
                      <Avatar className="h-8 w-8">
                       <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? "user photo"} />
-                      <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+                      <AvatarFallback>{getInitials()}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
