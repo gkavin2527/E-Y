@@ -65,7 +65,7 @@ const ImageUrlInput = ({ value, onChange, onRemove }: { value: string; onChange:
         <div className="flex items-center gap-2 group">
             {value ? (
                 <div className="relative w-24 h-24 rounded-md overflow-hidden border">
-                    <Image src={value} alt="Product image preview" layout="fill" objectFit="cover" />
+                    <Image src={value} alt="Product image preview" fill className="object-cover" />
                 </div>
             ) : (
                 <div className="w-24 h-24 rounded-md border border-dashed flex items-center justify-center bg-muted">
@@ -255,7 +255,7 @@ export function ProductDialog({ isOpen, setIsOpen, product }: ProductDialogProps
                     <FormItem>
                         <FormLabel>Product Images</FormLabel>
                         <FormDescription>
-                            Click the upload icon to select an image from your computer, or paste a URL.
+                            Click the upload icon to select an image from your computer.
                         </FormDescription>
                         <div className="space-y-2">
                            {imageFields.map((field, index) => (
