@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type { Product } from '@/lib/types';
 import { ScrollArea } from '../ui/scroll-area';
+import { Check } from 'lucide-react';
 
 const productSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters.'),
