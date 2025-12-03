@@ -4,19 +4,20 @@
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Loader2, ShieldAlert } from 'lucide-react';
 
-function LoadingScreen() {
+function StatusScreen({ title, description, icon }: { title: string, description: string, icon: React.ReactNode }) {
     return (
         <div className="flex min-h-screen w-full items-center justify-center bg-background">
             <Card className="w-[350px]">
                 <CardHeader>
-                    <CardTitle>Verifying Access</CardTitle>
+                    <CardTitle>{title}</CardTitle>
+                    <CardDescription>{description}</CardDescription>
                 </CardHeader>
                 <CardContent className="flex items-center justify-center p-10">
-                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                    {icon}
                 </CardContent>
             </Card>
         </div>
@@ -35,39 +36,37 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
 
   const { data: adminDoc, isLoading: isAdminDocLoading } = useDoc(adminDocRef);
 
-  useEffect(() => {
-    // Wait until both user and admin status are fully loaded
-    if (isUserLoading || isAdminDocLoading) {
-      return; // Do nothing while loading
-    }
-
-    // If there's no user, redirect to login
-    if (!user) {
-      router.replace('/login?redirect=/admin');
-      return;
-    }
-
-    // If there is a user but they are not in the admin document, redirect to home
-    if (!adminDoc) {
-      router.replace('/');
-      return;
-    }
-
-  }, [user, adminDoc, isUserLoading, isAdminDocLoading, router]);
-
-  // Determine if the user is allowed
-  const isAllowed = user && adminDoc;
-  
-  // Show loading screen while we wait for any data
-  if (isUserLoading || isAdminDocLoading) {
-    return <LoadingScreen />;
-  }
-  
-  // If allowed, show the content
-  if (isAllowed) {
-    return <>{children}</>;
+  // If the user's auth status is loading, or if we have a user but are still checking their admin status, show loading.
+  if (isUserLoading || (user && isAdminDocLoading)) {
+    return (
+        <StatusScreen 
+            title="Verifying Access" 
+            description="Please wait while we check your permissions." 
+            icon={<Loader2 className="h-12 w-12 animate-spin text-primary" />} 
+        />
+    );
   }
 
-  // Otherwise, show loading screen during the brief moment of redirection
-  return <LoadingScreen />;
+  // If there is no user logged in after checking, redirect to login.
+  if (!user) {
+    // useEffect is necessary to prevent "cannot update a component while rendering a different component" error.
+    useEffect(() => {
+        router.replace('/login?redirect=/admin');
+    }, [router]);
+    return null; // Render nothing while redirecting
+  }
+
+  // If we have a user, have checked for the admin doc, and it doesn't exist, show permission denied.
+  if (!adminDoc) {
+    return (
+        <StatusScreen 
+            title="Access Denied" 
+            description="You do not have permission to view this page." 
+            icon={<ShieldAlert className="h-12 w-12 text-destructive" />} 
+        />
+    );
+  }
+
+  // If all checks pass, render the children.
+  return <>{children}</>;
 }
