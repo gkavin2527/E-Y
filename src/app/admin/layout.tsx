@@ -1,6 +1,6 @@
 
 'use client';
-import { Home, Package, ShoppingCart, Users } from 'lucide-react';
+import { Home, Package, ShoppingCart, Users, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -59,4 +59,3 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     </AdminAuthGuard>
   );
 }
-import { Shield } from 'lucide-react';
