@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCart } from '@/hooks/use-cart';
@@ -7,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ScrollArea } from './ui/scroll-area';
 import { SheetFooter, SheetClose } from './ui/sheet';
+import { Trash2 } from 'lucide-react';
 
 export function CartSheet() {
   const { items, removeItem, updateQuantity, totalItems, totalPrice } = useCart();
@@ -52,7 +52,7 @@ export function CartSheet() {
                           </Button>
                         </div>
                         <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => removeItem(item.id)}>
-                          Remove
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>

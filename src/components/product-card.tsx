@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { Product } from '@/lib/types';
 import { Button } from './ui/button';
+import { Plus } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
@@ -40,7 +41,7 @@ export function ProductCard({ product }: ProductCardProps) {
           <p className="font-semibold mt-1 text-foreground">₹{product.price.toFixed(2)}</p>
         </div>
         <Button variant="outline" size="icon" className="shrink-0">
-          Add
+          <Plus className="h-4 w-4" />
         </Button>
       </div>
     </div>

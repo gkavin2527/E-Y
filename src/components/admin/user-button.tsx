@@ -75,7 +75,12 @@ export function UserButton() {
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild><Link href="/account/profile">Profile</Link></DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/account/profile" className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            <span>Profile</span>
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem asChild><Link href="/account/orders">Orders</Link></DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">

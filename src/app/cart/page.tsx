@@ -9,6 +9,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import { Minus, Plus, Trash2 } from 'lucide-react';
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, totalItems, totalPrice } = useCart();
@@ -45,13 +46,13 @@ export default function CartPage() {
             <div className="lg:col-span-2">
                 <div className="space-y-4">
                     {items.map((item) => {
-                        const productImage = PlaceHolderImages.find((p) => p.id === item.image);
+                        const productImage = item.image;
                         return (
                         <Card key={item.id}>
                             <CardContent className="flex items-center p-4">
                                 <div className="relative h-28 w-24 flex-shrink-0 overflow-hidden rounded-md">
                                 {productImage && (
-                                    <Image src={productImage.imageUrl} alt={item.name} fill className="object-cover" data-ai-hint={productImage.imageHint} />
+                                    <Image src={productImage} alt={item.name} fill className="object-cover" />
                                 )}
                                 </div>
                                 <div className="ml-4 flex-1 flex flex-col sm:flex-row justify-between">
@@ -64,12 +65,12 @@ export default function CartPage() {
                                     </div>
                                     <div className="flex items-center justify-between sm:justify-end sm:space-x-8">
                                         <div className="flex items-center border rounded-md">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateQuantity(item.id, item.quantity - 1)} disabled={item.quantity <= 1}>-</Button>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateQuantity(item.id, item.quantity - 1)} disabled={item.quantity <= 1}><Minus className="h-3 w-3" /></Button>
                                             <span className="w-8 text-center text-sm">{item.quantity}</span>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateQuantity(item.id, item.quantity + 1)}>+</Button>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateQuantity(item.id, item.quantity + 1)}><Plus className="h-3 w-3" /></Button>
                                         </div>
                                         <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={() => removeItem(item.id)}>
-                                            Remove
+                                            <Trash2 className="h-5 w-5" />
                                         </Button>
                                     </div>
                                 </div>

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState, ChangeEvent, useId } from 'react';
 import Image from 'next/image';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useFirestore } from '@/firebase';
@@ -116,7 +116,7 @@ export function ProductDialog({ isOpen, setIsOpen, product }: ProductDialogProps
     },
   });
 
-  const { fields: imageFields, append: appendImage, remove: removeImage } = useFieldArray({
+  const { fields: imageFields, append: appendImage, remove: removeImage, replace: replaceImages } = useFieldArray({
     control: form.control,
     name: "images",
   });

@@ -36,6 +36,7 @@ import {
 import { Input } from '../ui/input';
 import { useRouter } from 'next/navigation';
 import React from 'react';
+import { Search, ShoppingBag, User as UserIcon } from 'lucide-react';
 
 
 const SearchDialog = () => {
@@ -54,7 +55,7 @@ const SearchDialog = () => {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon" aria-label="Search">
-          Search
+          <Search className="h-5 w-5" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
@@ -117,7 +118,7 @@ const UserButton = () => {
         return (
             <Button variant="ghost" size="icon" aria-label="Login" asChild>
                 <Link href="/login">
-                User
+                <UserIcon className="h-5 w-5" />
                 </Link>
             </Button>
         )
@@ -172,7 +173,7 @@ export function SiteHeader() {
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" aria-label="Shopping Cart" className="relative">
-                  Shopping Bag
+                  <ShoppingBag className="h-5 w-5" />
                   {totalItems > 0 && (
                     <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-primary-foreground bg-primary rounded-full transform translate-x-1/2 -translate-y-1/2">
                       {totalItems}
