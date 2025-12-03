@@ -14,10 +14,7 @@ export function MainNav() {
   ];
 
   return (
-    <div className="flex items-center space-x-4 lg:space-x-6">
-      <Link href="/" className="flex items-center space-x-2">
-        <span className="font-bold font-headline mr-6">E&Y</span>
-      </Link>
+    <div className="flex items-center space-x-4 lg:space-x-6 flex-1">
       <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
         {navLinks.map((link) => (
           <Link
