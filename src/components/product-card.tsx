@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type { Product } from '@/lib/types';
 import { Button } from './ui/button';
 import { ShoppingBag } from 'lucide-react';
@@ -10,21 +9,20 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const productImage = PlaceHolderImages.find((p) => p.id === product.images[0]);
+  const firstImage = product.images?.[0];
 
   return (
     <div className="group relative">
       <Link href={`/products/${product.id}`}>
         <div className="overflow-hidden rounded-lg">
           <div className="relative aspect-[3/4] bg-muted">
-            {productImage ? (
+            {firstImage ? (
               <Image
-                src={productImage.imageUrl}
+                src={firstImage}
                 alt={product.name}
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
                 sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 20vw"
-                data-ai-hint={productImage.imageHint}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">

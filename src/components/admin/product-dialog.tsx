@@ -14,10 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import type { Product } from '@/lib/types';
-import { ScrollArea } from '../ui/scroll-area';
-import { Check } from 'lucide-react';
 
 const productSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters.'),
@@ -29,9 +26,7 @@ const productSchema = z.object({
   sizes: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: 'You have to select at least one size.',
   }),
-  images: z.array(z.string()).refine((value) => value.some((item) => item), {
-    message: 'You have to select at least one image.',
-  }),
+  images: z.array(z.string().url({ message: 'Please enter a valid URL.' })).min(1, 'Please add at least one image URL.'),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -62,6 +57,11 @@ export function ProductDialog({ isOpen, setIsOpen, product }: ProductDialogProps
       sizes: [],
       images: [],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "images",
   });
 
   useEffect(() => {
@@ -195,39 +195,40 @@ export function ProductDialog({ isOpen, setIsOpen, product }: ProductDialogProps
                 )} />
               </div>
               <div>
-                <FormField control={form.control} name="images" render={() => (
-                    <FormItem>
-                        <FormLabel>Images</FormLabel>
-                        <ScrollArea className="h-96 rounded-md border">
-                            <div className="p-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-3 gap-4">
-                            {PlaceHolderImages.map((image) => (
-                                <FormField key={image.id} control={form.control} name="images" render={({ field }) => (
-                                    <FormItem key={image.id}>
-                                        <FormControl>
-                                            <label className="cursor-pointer">
-                                                <Checkbox
-                                                     checked={field.value?.includes(image.id)}
-                                                     onCheckedChange={(checked) => {
-                                                        return checked ? field.onChange([...field.value, image.id]) : field.onChange(field.value?.filter((value) => value !== image.id));
-                                                    }}
-                                                    className="sr-only peer"
-                                                />
-                                                <div className="relative aspect-square rounded-md overflow-hidden ring-offset-background peer-data-[state=checked]:ring-2 peer-data-[state=checked]:ring-primary">
-                                                    <Image src={image.imageUrl} alt={image.description || 'Product image'} fill className="object-cover" />
-                                                    <div className="absolute inset-0 bg-black/50 peer-data-[state=checked]:opacity-100 opacity-0 transition-opacity flex items-center justify-center">
-                                                        <Check className="h-8 w-8 text-white" />
-                                                    </div>
-                                                </div>
-                                            </label>
-                                        </FormControl>
-                                    </FormItem>
-                                )} />
-                            ))}
+                <FormItem>
+                    <FormLabel>Image URLs</FormLabel>
+                    <FormDescription>
+                        Add links to your product images. You can host them on services like Imgur or a cloud provider.
+                    </FormDescription>
+                    <div className="space-y-2">
+                        {fields.map((field, index) => (
+                            <div key={field.id} className="flex items-center gap-2">
+                                <FormField
+                                    control={form.control}
+                                    name={`images.${index}`}
+                                    render={({ field }) => (
+                                        <FormItem className="flex-1">
+                                            <FormControl>
+                                                <Input {...field} placeholder="https://example.com/image.png" />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <Button type="button" variant="destructive" size="sm" onClick={() => remove(index)}>Remove</Button>
                             </div>
-                        </ScrollArea>
-                        <FormMessage />
-                    </FormItem>
-                )} />
+                        ))}
+                         <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="mt-2"
+                            onClick={() => append("")}
+                        >
+                            Add Image URL
+                        </Button>
+                    </div>
+                </FormItem>
               </div>
             </div>
             <DialogFooter className="pt-4">

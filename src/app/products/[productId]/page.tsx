@@ -2,7 +2,6 @@
 'use client';
 
 import { notFound, useParams } from 'next/navigation';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -155,7 +154,7 @@ export default function ProductPage() {
     }
   }
 
-  const productImages = product.images.map(id => PlaceHolderImages.find(p => p.id === id)).filter(Boolean);
+  const productImages = product.images || [];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -185,15 +184,15 @@ export default function ProductPage() {
         <div className="grid md:grid-cols-2 gap-12">
             <div className="flex flex-col-reverse md:flex-row gap-4">
                 <div className="flex md:flex-col gap-2">
-                    {productImages.map((img, index) => img && (
-                        <button key={img.id} onClick={() => setSelectedImage(index)} className={`relative h-20 w-20 md:h-24 md:w-24 rounded-lg overflow-hidden border-2 ${selectedImage === index ? 'border-primary' : 'border-transparent'}`}>
-                             <Image src={img.imageUrl} alt={`${product.name} thumbnail ${index + 1}`} fill className="object-cover" data-ai-hint={img.imageHint} />
+                    {productImages.map((imgUrl, index) => (
+                        <button key={index} onClick={() => setSelectedImage(index)} className={`relative h-20 w-20 md:h-24 md:w-24 rounded-lg overflow-hidden border-2 ${selectedImage === index ? 'border-primary' : 'border-transparent'}`}>
+                             <Image src={imgUrl} alt={`${product.name} thumbnail ${index + 1}`} fill className="object-cover" />
                         </button>
                     ))}
                 </div>
                 <div className="relative aspect-[3/4] flex-1 rounded-lg overflow-hidden">
                     {productImages[selectedImage] ? (
-                         <Image src={productImages[selectedImage]!.imageUrl} alt={product.name} fill className="object-cover" data-ai-hint={productImages[selectedImage]!.imageHint} />
+                         <Image src={productImages[selectedImage]} alt={product.name} fill className="object-cover" />
                     ) : <Skeleton className="h-full w-full" />}
                 </div>
             </div>

@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ProductDialog } from '@/components/admin/product-dialog';
 
 export default function AdminProductsPage() {
@@ -76,16 +75,16 @@ export default function AdminProductsPage() {
                 </TableRow>
               )}
               {!isLoading && products?.map((product) => {
-                  const productImage = PlaceHolderImages.find((p) => p.id === product.images[0]);
+                  const firstImage = product.images?.[0];
                   return (
                     <TableRow key={product.id}>
                     <TableCell className="hidden sm:table-cell">
-                        {productImage && (
+                        {firstImage && (
                             <Image
                                 alt={product.name}
                                 className="aspect-square rounded-md object-cover"
                                 height="64"
-                                src={productImage.imageUrl}
+                                src={firstImage}
                                 width="64"
                             />
                         )}

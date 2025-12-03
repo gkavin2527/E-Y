@@ -11,15 +11,14 @@ import { ShoppingBag } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 
 function OrderItemCard({ item }: { item: Order['items'][0] }) {
-    const productImage = PlaceHolderImages.find((p) => p.id === item.image);
+    const productImage = item.image;
     return (
         <div className="flex items-center gap-4 py-2">
             <div className="relative h-16 w-16 rounded-md overflow-hidden border">
-                {productImage && <Image src={productImage.imageUrl} alt={item.name} fill className="object-cover" />}
+                {productImage && <Image src={productImage} alt={item.name} fill className="object-cover" />}
             </div>
             <div className="flex-1">
                 <p className="font-medium text-sm">{item.name}</p>

@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ScrollArea } from './ui/scroll-area';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { SheetFooter, SheetClose } from './ui/sheet';
 
@@ -19,17 +18,16 @@ export function CartSheet() {
           <ScrollArea className="flex-grow pr-4 -mr-6">
             <div className="divide-y">
               {items.map((item) => {
-                const productImage = PlaceHolderImages.find((p) => p.id === item.image);
+                const productImage = item.image;
                 return (
                   <div key={item.id} className="flex items-center py-4">
                     <div className="relative h-24 w-20 flex-shrink-0 overflow-hidden rounded-md">
                       {productImage ? (
                         <Image
-                          src={productImage.imageUrl}
+                          src={productImage}
                           alt={item.name}
                           fill
                           className="object-cover"
-                          data-ai-hint={productImage.imageHint}
                         />
                       ) : (
                         <div className="bg-muted w-full h-full" />

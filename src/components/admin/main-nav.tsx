@@ -15,7 +15,6 @@ import { PanelLeft } from 'lucide-react';
 const navLinks = [
     { href: '/admin', label: 'Dashboard', icon: Home },
     { href: '/admin/products', label: 'Products', icon: Package },
-    { href: '/admin/image-studio', label: 'AI Image Studio', icon: ImageIcon },
 ];
 
 export function MainNav() {
