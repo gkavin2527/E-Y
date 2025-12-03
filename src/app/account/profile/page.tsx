@@ -3,14 +3,16 @@
 
 import { useState, useEffect } from 'react';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import { updateDocumentNonBlocking } from '@/firebase';
+import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 
 type UserProfile = {
@@ -38,28 +40,29 @@ export default function ProfilePage() {
   
   useEffect(() => {
     if (userDocRef) {
-      const fetchProfile = async () => {
-        setIsLoading(true);
-        try {
-          const docSnap = await getDoc(userDocRef);
-          if (docSnap.exists()) {
-            const data = docSnap.data() as UserProfile;
-            setProfile(data);
-            setFirstName(data.firstName);
-            setLastName(data.lastName);
-          }
-        } catch (error) {
-          console.error("Error fetching user profile:", error);
-          toast({
-            variant: "destructive",
-            title: "Failed to load profile",
-            description: "There was a problem fetching your profile data.",
-          });
-        } finally {
-          setIsLoading(false);
+      setIsLoading(true);
+      const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data() as UserProfile;
+          setProfile(data);
+          setFirstName(data.firstName);
+          setLastName(data.lastName);
+        } else {
+            setProfile(null);
         }
-      };
-      fetchProfile();
+        setIsLoading(false);
+      }, (error) => {
+        console.error("Error fetching user profile:", error);
+        const permissionError = new FirestorePermissionError({
+            path: userDocRef.path,
+            operation: 'get',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        setIsLoading(false);
+      });
+
+      return () => unsubscribe();
+
     } else if (!isUserLoading) {
         setIsLoading(false);
     }
@@ -120,7 +123,7 @@ export default function ProfilePage() {
         <Card>
             <CardHeader>
                 <CardTitle>Profile Not Found</CardTitle>
-                <CardDescription>We couldn't find your profile data.</CardDescription>
+                <CardDescription>We couldn't find your profile data. This might be a permission issue.</CardDescription>
             </CardHeader>
         </Card>
     );
