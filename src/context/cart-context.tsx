@@ -1,7 +1,8 @@
+
 'use client';
 
 import React, { createContext, useReducer, useEffect, ReactNode, useCallback, useMemo } from 'react';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import type { CartItem, Product, CartItemDetails } from '@/lib/types';
 
@@ -96,18 +97,22 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   
         if (user && cartDocRef) {
           // User is logged in, try to load from Firestore
-          const docSnap = await getDoc(cartDocRef);
-          if (docSnap.exists()) {
-            const firestoreCart = docSnap.data().items as CartItemDetails[];
-            // Merge with local cart
-            const localCart = getLocalCart();
-            const mergedCart = mergeCarts(firestoreCart, localCart);
-            dispatch({ type: 'SET_CART', payload: mergedCart });
-            clearLocalCart();
-          } else {
-            // No cart in Firestore, use local and get ready to sync
-            const localCart = getLocalCart();
-            dispatch({ type: 'SET_CART', payload: localCart });
+          try {
+            const docSnap = await getDoc(cartDocRef);
+            if (docSnap.exists()) {
+              const firestoreCart = docSnap.data().items as CartItemDetails[];
+              // Merge with local cart
+              const localCart = getLocalCart();
+              const mergedCart = mergeCarts(firestoreCart, localCart);
+              dispatch({ type: 'SET_CART', payload: mergedCart });
+              clearLocalCart();
+            } else {
+              // No cart in Firestore, use local and get ready to sync
+              const localCart = getLocalCart();
+              dispatch({ type: 'SET_CART', payload: localCart });
+            }
+          } catch (e) {
+            console.error("Error loading cart from Firestore", e);
           }
         } else {
           // User is not logged in, load from local storage
@@ -135,15 +140,16 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     // Effect to save cart to Firestore or local storage
     useEffect(() => {
       // Don't save initial empty state until loaded
-      if (isUserLoading && state.items.length === 0) return;
+      if (isUserLoading && state.items.length === 0 && !cartDocRef) return;
   
       if (user && cartDocRef) {
         // Debounced save to Firestore
         const handler = setTimeout(() => {
-          setDoc(cartDocRef, { userId: user.uid, items: state.items }, { merge: true });
+          const cartData = { userId: user.uid, items: state.items };
+          setDocumentNonBlocking(cartDocRef, cartData, { merge: true });
         }, 500);
         return () => clearTimeout(handler);
-      } else {
+      } else if (!user && !isUserLoading) {
         // Save to local storage for anonymous users
         try {
             localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state.items));
@@ -177,7 +183,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         clearCart,
         totalItems: 0, // Will be replaced by useCart hook
         totalPrice: 0, // Will be replaced by useCart hook
-      }), [state.items]);
+      }), [state.items,
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        isUserLoading, user
+    ]);
   
     return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
   };
@@ -188,7 +197,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     localCart.forEach(localItem => {
       const existingIndex = merged.findIndex(item => item.id === localItem.id);
       if (existingIndex > -1) {
-        // If item exists, sum quantities (or use a more complex rule)
+        // If item exists, sum quantities
         merged[existingIndex].quantity += localItem.quantity;
       } else {
         // If item doesn't exist, add it
