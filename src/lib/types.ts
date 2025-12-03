@@ -34,3 +34,22 @@ export type Cart = {
   userId: string;
   items: CartItem[];
 };
+
+// Represents a single item within a historical order.
+export type OrderItem = {
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  size: string;
+  image: string;
+};
+
+// Represents a completed order object stored in Firestore.
+export type Order = {
+  id: string; // The document ID
+  userId: string;
+  createdAt: { seconds: number; nanoseconds: number; }; // Firestore Timestamp type
+  total: number;
+  items: OrderItem[];
+};

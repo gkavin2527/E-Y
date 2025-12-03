@@ -130,9 +130,7 @@
       },
       "required": [
         "id",
-        "email",
-        "firstName",
-        "lastName"
+        "email"
       ]
     },
     "CartItem": {
@@ -179,6 +177,78 @@
       },
       "required": [
         "userId",
+        "items"
+      ]
+    },
+    "OrderItem": {
+      "title": "Order Item",
+      "type": "object",
+      "description": "Represents a single item within an order, capturing the details at the time of purchase.",
+      "properties": {
+        "productId": {
+          "type": "string",
+          "description": "The ID of the product."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the product at the time of purchase."
+        },
+        "price": {
+          "type": "number",
+          "description": "The price of a single unit of the product at the time of purchase."
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The quantity of the product purchased."
+        },
+        "size": {
+          "type": "string",
+          "description": "The selected size of the product."
+        },
+        "image": {
+          "type": "string",
+          "description": "The image ID of the product at the time of purchase."
+        }
+      },
+      "required": [
+        "productId",
+        "name",
+        "price",
+        "quantity",
+        "size",
+        "image"
+      ]
+    },
+    "Order": {
+      "title": "Order",
+      "type": "object",
+      "description": "Represents a completed customer order.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who placed the order."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the order was placed."
+        },
+        "total": {
+          "type": "number",
+          "description": "The total price of the order, including shipping and taxes."
+        },
+        "items": {
+          "type": "array",
+          "description": "A list of items included in the order.",
+          "items": {
+            "$ref": "#/entities/OrderItem"
+          }
+        }
+      },
+      "required": [
+        "userId",
+        "createdAt",
+        "total",
         "items"
       ]
     }
@@ -274,11 +344,31 @@
           "schema": {
             "$ref": "#/entities/Cart"
           },
-          "description": "Represents a shopping cart for a user, stored as a subcollection under the user's document.",
+          "description": "Represents a shopping cart for a user, stored as a single document in a subcollection.",
           "params": [
             {
               "name": "userId",
               "description": "Unique identifier for the user. This must match the Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "users/{userId}/orders/{orderId}",
+        "definition": {
+          "entityName": "Order",
+          "schema": {
+            "$ref": "#/entities/Order"
+          },
+          "description": "Represents a historical order for a user.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The ID of the user who owns the order."
+            },
+            {
+              "name": "orderId",
+              "description": "Unique identifier for the order."
             }
           ]
         }

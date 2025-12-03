@@ -3,12 +3,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,6 +42,7 @@ type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
 export default function CheckoutPage() {
   const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
   const router = useRouter();
   const { items, totalPrice, totalItems, clearCart } = useCart();
   const { toast } = useToast();
@@ -71,6 +73,49 @@ export default function CheckoutPage() {
     }
   }, [user, isUserLoading, router, toast]);
 
+  
+  const shippingCost = 5.00;
+  const totalWithShipping = totalPrice + shippingCost;
+  
+  const onSubmit = async (data: CheckoutFormValues) => {
+    if (!user || !firestore || items.length === 0) return;
+
+    setIsProcessing(true);
+    toast({
+        title: "Processing Order...",
+        description: "Please wait while we finalize your order.",
+    });
+
+    try {
+        const ordersCollectionRef = collection(firestore, 'users', user.uid, 'orders');
+        
+        await addDoc(ordersCollectionRef, {
+            userId: user.uid,
+            createdAt: serverTimestamp(),
+            items: items,
+            total: totalWithShipping,
+        });
+
+        await clearCart();
+
+        toast({
+            title: "Order Placed Successfully!",
+            description: "Thank you for your purchase. A confirmation has been sent to your email.",
+        });
+        router.push('/account/orders');
+
+    } catch (error) {
+        console.error("Error placing order: ", error);
+        toast({
+            variant: "destructive",
+            title: "Order Failed",
+            description: "There was a problem placing your order. Please try again.",
+        });
+    } finally {
+        setIsProcessing(false);
+    }
+  };
+
   if (isUserLoading || !user) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -87,29 +132,6 @@ export default function CheckoutPage() {
       </div>
     );
   }
-  
-  const onSubmit = (data: CheckoutFormValues) => {
-    setIsProcessing(true);
-    toast({
-        title: "Processing Order...",
-        description: "Please wait while we finalize your order.",
-    });
-
-    // Simulate order processing
-    setTimeout(() => {
-        setIsProcessing(false);
-        toast({
-            title: "Order Placed Successfully!",
-            description: "Thank you for your purchase. A confirmation has been sent to your email.",
-        });
-        clearCart();
-        router.push('/account/orders');
-    }, 2000);
-  };
-  
-  const shippingCost = 5.00;
-  const totalWithShipping = totalPrice + shippingCost;
-
 
   if (totalItems === 0 && !isProcessing) {
     return (

@@ -20,11 +20,11 @@
  *   measure that requires catalog management to be performed through a trusted
  *   server environment (e.g., Cloud Functions with Admin SDK), preventing
  *   unauthorized tampering with store data.
- * - User Privacy: User profiles and carts are strictly private. A user can only
+ * - User Privacy: User profiles, carts, and orders are strictly private. A user can only
  *   access their own data. Listing all users is explicitly disallowed to
  *   protect user privacy.
  * - Ownership Integrity: When creating documents within a user's private space
- *   (e.g., a cart), the rules enforce that the document data contains a reference
+ *   (e.g., a cart or an order), the rules enforce that the document data contains a reference
  *   ID back to the user, ensuring a consistent and unbreakable link of ownership.
  *
  * Denormalization for Authorization:
@@ -81,6 +81,13 @@ service cloud.firestore {
     function isCartDataConsistent() {
       return request.resource.data.userId == resource.data.userId;
     }
+
+    // Validates that a user is creating an order in their own space and that
+    // the order's data links back to them.
+    function isCreatingOwnOrder(userId) {
+        return isOwner(userId) && request.resource.data.userId == userId;
+    }
+
 
     /**
      * @description Publicly readable store sections (e.g., Men, Women). Writes are disallowed.
@@ -147,6 +154,20 @@ service cloud.firestore {
        */
       match /cart/{cartDoc} {
           allow read, write: if isOwner(userId);
+      }
+
+      /**
+       * @description User's historical orders.
+       * @path /users/{userId}/orders/{orderId}
+       * @allow (read, list) Owner can view their own past orders.
+       * @allow (create) Owner can create a new order. `userId` in the order must match their UID.
+       * @deny (update, delete) Orders are immutable and cannot be changed by the client.
+       * @principle Enforces ownership and immutability for historical order data.
+       */
+      match /orders/{orderId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isCreatingOwnOrder(userId);
+        allow update, delete: if false;
       }
     }
   }
