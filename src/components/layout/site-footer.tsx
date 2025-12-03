@@ -29,7 +29,6 @@ export function SiteFooter() {
               <li><Link href="/men" className="text-muted-foreground hover:text-primary">Men</Link></li>
               <li><Link href="/women" className="text-muted-foreground hover:text-primary">Women</Link></li>
               <li><Link href="/men/accessories" className="text-muted-foreground hover:text-primary">Accessories</Link></li>
-              <li><Link href="/ai-stylist" className="text-muted-foreground hover:text-primary">AI Stylist</Link></li>
             </ul>
           </div>
           
