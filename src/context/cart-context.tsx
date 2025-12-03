@@ -89,7 +89,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const firestore = useFirestore();
   
     const cartDocRef = useMemoFirebase(
-      () => (firestore && user ? doc(firestore, 'users', user.uid, 'cart', 'items') : null),
+      () => (firestore && user ? doc(firestore, 'carts', user.uid) : null),
       [firestore, user]
     );
   
@@ -134,7 +134,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const getLocalCart = (): CartItem[] => {
         try {
             const savedState = localStorage.getItem(LOCAL_STORAGE_KEY);
-            return savedState ? JSON.parse(savedState) : [];
+            if (!savedState) return [];
+            const parsed = JSON.parse(savedState);
+            // Ensure we return an array, even if old data was malformed.
+            return Array.isArray(parsed) ? parsed : [];
           } catch (error) {
             console.error('Failed to load cart from local storage', error);
             return [];
@@ -148,7 +151,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     // Effect to save cart to Firestore or local storage
     useEffect(() => {
       // Don't save initial empty state until loaded from persistence
-      if (isUserLoading) return;
+      if (isUserLoading && state.items.length === 0) return;
   
       if (user && cartDocRef) {
         const handler = setTimeout(() => {
@@ -200,6 +203,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   function mergeCarts(firestoreCart: CartItem[], localCart: CartItem[]): CartItem[] {
     const merged = [...firestoreCart];
+  
+    if (!Array.isArray(localCart)) {
+        console.error('Local cart is not an array, cannot merge.', localCart);
+        return merged;
+    }
   
     localCart.forEach(localItem => {
       const existingIndex = merged.findIndex(item => item.id === localItem.id);
