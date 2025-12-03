@@ -1,11 +1,14 @@
-import { notFound } from 'next/navigation';
+
+'use client';
+import { notFound, useParams } from 'next/navigation';
 import { categories, genders } from '@/lib/data';
 import Image from 'next/image';
 import Link from 'next/link';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
-export default function GenderPage({ params }: { params: { gender: string } }) {
-  const { gender } = params;
+export default function GenderPage() {
+  const params = useParams();
+  const gender = params.gender as string;
 
   if (!genders.some(g => g.slug === gender)) {
     notFound();

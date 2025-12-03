@@ -24,8 +24,11 @@ function ProductGridSkeleton() {
     )
 }
 
-export default function CategoryPage({ params }: { params: { gender: string; category: string } }) {
-  const { gender: genderSlug, category: categorySlug } = params;
+export default function CategoryPage() {
+  const params = useParams();
+  const genderSlug = params.gender as string;
+  const categorySlug = params.category as string;
+
   const firestore = useFirestore();
 
   const gender = genders.find(g => g.slug === genderSlug);
