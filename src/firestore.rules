@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -57,20 +58,8 @@ service cloud.firestore {
 
       // LISTING ORDERS:
       // - User can ONLY list their own orders (must use query where("userId", "==", uid))
-      // - Admin can list ALL
-      allow list: if 
-        // USER LISTS THEIR OWN ORDERS
-        (
-          isSignedIn()
-          && request.query.where != null
-          && request.query.where.size() == 1
-          && request.query.where[0].field == "userId"
-          && request.query.where[0].op == "=="
-          && request.query.where[0].value == request.auth.uid
-        )
-        ||
-        // ADMIN LISTS ALL
-        isAdmin();
+      // - Admin can list ALL orders
+      allow list: if (request.query.userId == request.auth.uid) || isAdmin();
 
       allow update, delete: if false; // Orders cannot be modified after creation
     }
