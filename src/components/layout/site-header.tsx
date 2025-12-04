@@ -1,3 +1,4 @@
+
 'use client';
 
 import { MainNav } from './main-nav';
@@ -181,12 +182,6 @@ const UserButton = () => {
                     <Link href="/account/profile" className='flex items-center gap-2 cursor-pointer'>
                       <UserCircle className="h-4 w-4" />
                       <span>Profile</span>
-                    </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                    <Link href="/account/orders" className='flex items-center gap-2 cursor-pointer'>
-                      <Package className="h-4 w-4" />
-                      <span>Orders</span>
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

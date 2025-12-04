@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils';
 
 const accountNavLinks = [
   { href: '/account/profile', label: 'Profile' },
-  { href: '/account/orders', label: 'Orders' },
 ];
 
 export default function AccountLayout({
