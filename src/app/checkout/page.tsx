@@ -64,11 +64,11 @@ export default function CheckoutPage() {
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
-      fullName: '',
-      address: '',
-      city: '',
-      zipCode: '',
-      country: 'United States',
+      fullName: 'Anaya Sharma',
+      address: '12-B, Lodhi Road',
+      city: 'New Delhi',
+      zipCode: '110003',
+      country: 'India',
       cardNumber: '',
       expiryDate: '',
       cvc: '',
@@ -339,5 +339,3 @@ export default function CheckoutPage() {
     </div>
   );
 }
-
-    
