@@ -33,7 +33,7 @@ export default function RootLayout({
           <CartProvider>
             <div className="relative flex min-h-screen flex-col">
               <SiteHeader />
-              <main className="flex-1">{children}</main>
+              <main className="flex-1 container mx-auto px-4 py-8">{children}</main>
               <SiteFooter />
             </div>
             <Toaster />

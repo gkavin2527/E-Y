@@ -40,8 +40,8 @@ export default function Home() {
   const { data: newArrivals, isLoading } = useCollection<Product>(productsQuery);
 
   return (
-    <div className="space-y-12">
-      <section className="relative h-[60vh] w-full">
+    <div className="space-y-12 -mt-8">
+      <section className="relative h-[60vh] w-full -mx-4">
         {heroImage && (
           <Image
             src={heroImage.imageUrl}
