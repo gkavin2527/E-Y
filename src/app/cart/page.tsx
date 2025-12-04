@@ -22,7 +22,7 @@ export default function CartPage() {
         <h1 className="text-3xl font-bold font-headline mb-4">Your Cart is Empty</h1>
         <p className="text-muted-foreground mb-6">Looks like you haven't added anything to your cart yet.</p>
         <Button asChild>
-          <Link href="/shops/women">Start Shopping</Link>
+          <Link href="/">Start Shopping</Link>
         </Button>
       </div>
     );
