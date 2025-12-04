@@ -224,6 +224,14 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       dispatch({ type: 'CLEAR_CART' });
     };
 
+    const totalItems = useMemo(() => {
+        return state.items.reduce((total, item) => total + item.quantity, 0);
+    }, [state.items]);
+    
+    const totalPrice = useMemo(() => {
+        return state.items.reduce((total, item) => total + item.price * item.quantity, 0);
+    }, [state.items]);
+
     const value = useMemo(() => ({
         items: state.items,
         isCartLoading: state.isCartLoading,
@@ -231,9 +239,9 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         removeItem,
         updateQuantity,
         clearCart,
-        totalItems: 0,
-        totalPrice: 0,
-      }), [state.items, state.isCartLoading, user]);
+        totalItems,
+        totalPrice,
+      }), [state.items, state.isCartLoading, user, totalItems, totalPrice]);
   
     return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
