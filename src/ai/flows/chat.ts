@@ -41,9 +41,7 @@ const chatFlow = ai.defineFlow(
   async ({ history }) => {
     const response = await ai.generate({
       model: ai.model,
-      prompt: {
-        messages: history,
-      },
+      prompt: history,
     });
 
     const choice = response.choices[0];
