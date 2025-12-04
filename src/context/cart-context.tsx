@@ -137,90 +137,71 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         [firestore, user]
     );
 
+    // This effect synchronizes the cart from Firestore to the local state.
     useEffect(() => {
         if (isUserLoading) {
             dispatch({ type: 'SET_LOADING', payload: true });
             return;
         }
 
-        if (user && cartDocRef) {
-            // User is logged in, listen to Firestore
+        if (user && cartDocRef && firestore) {
+            // User is logged in, set up Firestore listener
             const unsubscribe = onSnapshot(cartDocRef, (docSnap) => {
                 const localCart = getLocalCart();
-                if (docSnap.exists()) {
-                    const firestoreCartItems = (docSnap.data() as Cart).items || [];
+                const firestoreCartItems = docSnap.exists() ? (docSnap.data() as Cart).items || [] : [];
+                
+                if (localCart.length > 0) {
+                    // If a local cart exists, merge it into Firestore one time.
                     const mergedItems = mergeCarts(firestoreCartItems, localCart);
                     dispatch({ type: 'SET_CART', payload: mergedItems });
-                    if (localCart.length > 0) {
-                        // If we merged a local cart, save back to Firestore and clear local
-                        saveCartToFirestore(firestore, user.uid, mergedItems).then(() => {
-                           clearLocalCart();
-                        });
-                    }
+                    saveCartToFirestore(firestore, user.uid, mergedItems).then(() => {
+                        clearLocalCart();
+                    });
                 } else {
-                    // No cart in Firestore, use local cart and save it to Firestore
-                    dispatch({ type: 'SET_CART', payload: localCart });
-                    if(localCart.length > 0) {
-                        saveCartToFirestore(firestore, user.uid, localCart);
-                    }
+                    // No local cart, just use what's in Firestore.
+                    dispatch({ type: 'SET_CART', payload: firestoreCartItems });
                 }
                 dispatch({ type: 'SET_LOADING', payload: false });
             }, (error) => {
                 console.error("Error listening to cart:", error);
+                dispatch({ type: 'SET_CART', payload: getLocalCart() }); // fallback to local on error
                 dispatch({ type: 'SET_LOADING', payload: false });
             });
             return () => unsubscribe();
-
         } else {
-            // User is not logged in, use local storage
+            // User is not logged in, use local storage only
             const localCart = getLocalCart();
             dispatch({ type: 'SET_CART', payload: localCart });
             dispatch({ type: 'SET_LOADING', payload: false });
         }
     }, [user, isUserLoading, cartDocRef, firestore]);
-
-    // Save to local storage for anonymous users
+    
+    // This effect synchronizes the local state back to storage (local or Firestore).
     useEffect(() => {
-        if (!user && !isUserLoading) {
-            try {
-                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state.items));
-            } catch (error) {
-                console.error('Failed to save cart to local storage', error);
-            }
-        }
-    }, [state.items, user, isUserLoading]);
-  
-    const addItem = async (product: Product, size: 'S' | 'M' | 'L' | 'XL', quantity: number) => {
-      const newAction = { type: 'ADD_ITEM' as const, payload: { product, size, quantity } };
-      const tempState = cartReducer(state, newAction);
-      if(user && firestore) {
-          await saveCartToFirestore(firestore, user.uid, tempState.items);
+      // Don't save during initial load
+      if (state.isCartLoading) return;
+
+      if (user && firestore) {
+        saveCartToFirestore(firestore, user.uid, state.items);
+      } else if (!user && !isUserLoading) {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state.items));
       }
-      dispatch(newAction);
+    }, [state.items, user, isUserLoading, firestore, state.isCartLoading]);
+
+
+    const addItem = (product: Product, size: 'S' | 'M' | 'L' | 'XL', quantity: number) => {
+      dispatch({ type: 'ADD_ITEM', payload: { product, size, quantity } });
     };
   
-    const removeItem = async (itemId: string) => {
-      const newAction = { type: 'REMOVE_ITEM' as const, payload: { itemId } };
-      const tempState = cartReducer(state, newAction);
-      if(user && firestore) {
-        await saveCartToFirestore(firestore, user.uid, tempState.items);
-      }
-      dispatch(newAction);
+    const removeItem = (itemId: string) => {
+      dispatch({ type: 'REMOVE_ITEM', payload: { itemId } });
     };
   
-    const updateQuantity = async (itemId: string, quantity: number) => {
-      const newAction = { type: 'UPDATE_QUANTITY' as const, payload: { itemId, quantity } };
-      const tempState = cartReducer(state, newAction);
-      if(user && firestore) {
-        await saveCartToFirestore(firestore, user.uid, tempState.items);
-      }
-      dispatch(newAction);
+    const updateQuantity = (itemId: string, quantity: number) => {
+      dispatch({ type: 'UPDATE_QUANTITY', payload: { itemId, quantity } });
     };
   
-    const clearCart = async () => {
-      if(user && firestore) {
-        await saveCartToFirestore(firestore, user.uid, []);
-      }
+    const clearCart = () => {
       dispatch({ type: 'CLEAR_CART' });
     };
 
@@ -241,7 +222,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         clearCart,
         totalItems,
         totalPrice,
-      }), [state.items, state.isCartLoading, user, totalItems, totalPrice]);
+      }), [state.items, state.isCartLoading, totalItems, totalPrice]);
   
     return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
