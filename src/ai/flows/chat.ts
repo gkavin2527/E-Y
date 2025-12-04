@@ -3,20 +3,14 @@
 /**
  * @fileOverview A Genkit flow for handling chat conversations with the Gemini model.
  * - chat: The main function that takes conversation history and returns the model's response.
- * - ChatMessageSchema: The Zod schema for a single chat message.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { generate } from 'genkit';
+import { ChatMessageSchema } from './types';
+import type { ChatMessage } from './types';
 
-// Define the schema for a single chat message
-export const ChatMessageSchema = z.object({
-  role: z.enum(['user', 'model']),
-  content: z.string(),
-});
-
-export type ChatMessage = z.infer<typeof ChatMessageSchema>;
 
 // Define the schema for the chat flow input
 const ChatInputSchema = z.object({
@@ -58,6 +52,6 @@ const chatFlow = ai.defineFlow(
         return { message: "I'm sorry, I couldn't generate a response." };
     }
 
-    return { message: choice.message.content.text };
+    return { message: choice.message.content as string };
   }
 );

@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -6,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send, Bot, User, Loader2 } from 'lucide-react';
-import { chat, type ChatMessage } from '@/ai/flows/chat';
+import { chat } from '@/ai/flows/chat';
+import type { ChatMessage } from '@/ai/flows/types';
 import { useUser } from '@/firebase';
 
 function ChatBubble({ message }: { message: ChatMessage }) {
