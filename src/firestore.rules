@@ -59,7 +59,7 @@ service cloud.firestore {
       // LISTING ORDERS:
       // - User can ONLY list their own orders (must use query where("userId", "==", uid))
       // - Admin can list ALL orders
-      allow list: if (request.query.userId == request.auth.uid) || isAdmin();
+      allow list: if (request.query.limit <= 10 && request.query.userId == request.auth.uid) || isAdmin();
 
       allow update, delete: if false; // Orders cannot be modified after creation
     }
