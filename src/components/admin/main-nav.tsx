@@ -8,11 +8,12 @@ import {
     SheetTrigger,
   } from "@/components/ui/sheet";
 import { Button } from '../ui/button';
-import { Menu, Package2, Image as ImageIcon } from 'lucide-react';
+import { Menu, Package2, Image as ImageIcon, ShoppingCart } from 'lucide-react';
 
 const navLinks = [
     { href: '/admin', label: 'Dashboard' },
     { href: '/admin/products', label: 'Products' },
+    { href: '/admin/orders', label: 'Orders' },
 ];
 
 export function MainNav() {
@@ -28,6 +29,8 @@ export function MainNav() {
             pathname === link.href && 'bg-muted text-primary'
             )}
         >
+            {link.label === 'Orders' && <ShoppingCart className="h-4 w-4" />}
+            {link.label === 'Products' && <Package2 className="h-4 w-4" />}
             {link.href === '/admin/image-studio' && <ImageIcon className="h-4 w-4" />}
             {link.label}
         </Link>

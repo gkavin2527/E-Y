@@ -55,8 +55,7 @@ service cloud.firestore {
       allow get: if (resource.data.userId == request.auth.uid) || isAdmin();
 
       // An admin can list all orders.
-      // A user can list orders if they are querying for their own orders.
-      allow list: if isAdmin() || (isSignedIn() && request.query.get("userId") == request.auth.uid);
+      allow list: if isAdmin();
 
       allow update, delete: if false;
     }
