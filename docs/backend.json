@@ -22,11 +22,14 @@
           "type": "string",
           "description": "Reference to Category. (Relationship: Category 1:N Product)"
         },
-        "sizeOptions": {
-          "type": "array",
-          "description": "Available sizes for the product.",
-          "items": {
-            "type": "string"
+        "sizes": {
+          "type": "object",
+          "description": "Stock quantity for each available size.",
+          "properties": {
+            "S": { "type": "number" },
+            "M": { "type": "number" },
+            "L": { "type": "number" },
+            "XL": { "type": "number" }
           }
         },
         "imageUrl": {
@@ -41,10 +44,6 @@
         "rating": {
           "type": "number",
           "description": "Customer rating of the product."
-        },
-        "stockAvailability": {
-          "type": "boolean",
-          "description": "Indicates if the product is in stock."
         }
       },
       "required": [
@@ -52,11 +51,10 @@
         "name",
         "price",
         "categoryId",
-        "sizeOptions",
+        "sizes",
         "imageUrl",
         "description",
-        "rating",
-        "stockAvailability"
+        "rating"
       ]
     },
     "Category": {

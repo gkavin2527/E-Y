@@ -33,6 +33,10 @@ export default function AdminProductsPage() {
     setIsDialogOpen(true);
   };
 
+  const getTotalStock = (sizes: Record<string, number>) => {
+    return Object.values(sizes).reduce((sum, quantity) => sum + quantity, 0);
+  }
+
   return (
     <>
       <div className="flex items-center">
@@ -75,6 +79,7 @@ export default function AdminProductsPage() {
               )}
               {!isLoading && products?.map((product) => {
                   const firstImage = product.images?.[0];
+                  const totalStock = getTotalStock(product.sizes);
                   return (
                     <TableRow key={product.id}>
                     <TableCell className="hidden sm:table-cell">
@@ -90,8 +95,8 @@ export default function AdminProductsPage() {
                     </TableCell>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>
-                        <Badge variant={product.stock > 0 ? "outline" : "destructive"}>
-                            {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
+                        <Badge variant={totalStock > 0 ? "outline" : "destructive"}>
+                            {totalStock > 0 ? 'In Stock' : 'Out of Stock'}
                         </Badge>
                     </TableCell>
                     <TableCell>₹{product.price.toFixed(2)}</TableCell>

@@ -4,11 +4,10 @@ export type Product = {
   description: string;
   price: number;
   rating: number;
-  stock: number;
   images: string[];
   category: string;
   gender: 'men' | 'women';
-  sizes: ('S' | 'M' | 'L' | 'XL')[];
+  sizes: Record<string, number>;
 };
 
 export type Category = {

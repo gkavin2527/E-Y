@@ -18,6 +18,7 @@ import { useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase
 import { doc, collection, query, where, limit } from 'firebase/firestore';
 import type { Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 
 const ProductRating = ({ rating }: { rating: number }) => {
@@ -107,12 +108,22 @@ export default function ProductPage() {
   if (!product) {
     notFound();
   }
+  
+  const totalStock = Object.values(product.sizes).reduce((sum, q) => sum + q, 0);
 
   const handleAddToCart = () => {
     if (!selectedSize) {
       toast({
         title: 'Please select a size',
         variant: 'destructive',
+      });
+      return;
+    }
+    if (product.sizes[selectedSize] === 0) {
+      toast({
+        title: 'Out of stock',
+        description: `This size is currently unavailable.`,
+        variant: 'destructive'
       });
       return;
     }
@@ -212,24 +223,34 @@ export default function ProductPage() {
                         onValueChange={(value) => setSelectedSize(value as any)}
                         className="flex gap-2"
                     >
-                        {product.sizes.map(size => (
+                        {Object.entries(product.sizes).map(([size, stock]) => {
+                            const isAvailable = stock > 0;
+                            return (
                             <div key={size}>
-                                <RadioGroupItem value={size} id={size} className="peer sr-only" />
+                                <RadioGroupItem value={size} id={size} className="peer sr-only" disabled={!isAvailable} />
                                 <Label
                                     htmlFor={size}
-                                    className="flex h-10 w-10 items-center justify-center rounded-md border text-sm cursor-pointer peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground hover:bg-accent hover:text-accent-foreground"
+                                    className={cn(
+                                        "flex h-10 w-10 items-center justify-center rounded-md border text-sm cursor-pointer",
+                                        "peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground",
+                                        isAvailable 
+                                            ? "hover:bg-accent hover:text-accent-foreground" 
+                                            : "bg-muted/50 text-muted-foreground/50 cursor-not-allowed opacity-50"
+                                    )}
                                 >
                                     {size}
                                 </Label>
                             </div>
-                        ))}
+                        )})}
                     </RadioGroup>
                 </div>
                 
-                <Button onClick={handleAddToCart} size="lg" className="w-full md:w-auto">Add to Cart</Button>
+                <Button onClick={handleAddToCart} size="lg" className="w-full md:w-auto" disabled={totalStock === 0}>
+                    {totalStock > 0 ? 'Add to Cart' : 'Out of Stock'}
+                </Button>
 
                 <p className="text-sm text-muted-foreground">
-                    {product.stock > 10 ? 'In Stock' : `Low Stock - only ${product.stock} left!`}
+                    {totalStock > 10 ? 'In Stock' : totalStock > 0 ? `Low Stock - only ${totalStock} left!` : ''}
                 </p>
             </div>
         </div>

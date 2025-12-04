@@ -12,21 +12,19 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import type { Product } from '@/lib/types';
 import { Trash2, Upload } from 'lucide-react';
+
+const allSizes = ['S', 'M', 'L', 'XL'];
 
 const productSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters.'),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
   price: z.coerce.number().min(0.01, 'Price must be positive.'),
-  stock: z.coerce.number().int().min(0, 'Stock cannot be negative.'),
   gender: z.enum(['men', 'women']),
   category: z.string().min(2, 'Category is required.'),
-  sizes: z.array(z.string()).refine((value) => value.some((item) => item), {
-    message: 'You have to select at least one size.',
-  }),
+  sizes: z.record(z.coerce.number().int().min(0, 'Stock must be a non-negative number.')),
   images: z.array(z.string().min(10, { message: 'Please add at least one image.' })).min(1, 'Please add at least one image.'),
 });
 
@@ -38,7 +36,6 @@ interface ProductDialogProps {
   product?: Product;
 }
 
-const allSizes = ['S', 'M', 'L', 'XL'];
 
 const ImageUrlInput = ({ value, onChange, onRemove }: { value: string; onChange: (value: string) => void; onRemove: () => void }) => {
     const [isUploading, setIsUploading] = useState(false);
@@ -102,16 +99,17 @@ export function ProductDialog({ isOpen, setIsOpen, product }: ProductDialogProps
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const defaultSizes = allSizes.reduce((acc, size) => ({ ...acc, [size]: 0 }), {});
+
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: '',
       description: '',
       price: 0,
-      stock: 0,
       gender: 'women',
       category: '',
-      sizes: [],
+      sizes: defaultSizes,
       images: [],
     },
   });
@@ -122,28 +120,28 @@ export function ProductDialog({ isOpen, setIsOpen, product }: ProductDialogProps
   });
 
   useEffect(() => {
-    if (product) {
-      form.reset({
-        name: product.name,
-        description: product.description,
-        price: product.price,
-        stock: product.stock,
-        gender: product.gender,
-        category: product.category,
-        sizes: product.sizes,
-        images: product.images,
-      });
-    } else {
-      form.reset({
-        name: '',
-        description: '',
-        price: 0,
-        stock: 0,
-        gender: 'women',
-        category: '',
-        sizes: [],
-        images: [],
-      });
+    if (isOpen) {
+        if (product) {
+          form.reset({
+            name: product.name,
+            description: product.description,
+            price: product.price,
+            gender: product.gender,
+            category: product.category,
+            sizes: { ...defaultSizes, ...product.sizes },
+            images: product.images,
+          });
+        } else {
+          form.reset({
+            name: '',
+            description: '',
+            price: 0,
+            gender: 'women',
+            category: '',
+            sizes: defaultSizes,
+            images: [],
+          });
+        }
     }
   }, [product, form, isOpen]);
 
@@ -206,14 +204,11 @@ export function ProductDialog({ isOpen, setIsOpen, product }: ProductDialogProps
                 <FormField control={form.control} name="description" render={({ field }) => (
                     <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} rows={5} /></FormControl><FormMessage /></FormItem>
                 )} />
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="price" render={({ field }) => (
-                        <FormItem><FormLabel>Price</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="stock" render={({ field }) => (
-                        <FormItem><FormLabel>Stock</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                </div>
+                
+                <FormField control={form.control} name="price" render={({ field }) => (
+                    <FormItem><FormLabel>Price</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+
                 <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control} name="gender" render={({ field }) => (
                         <FormItem><FormLabel>Gender</FormLabel>
@@ -227,29 +222,28 @@ export function ProductDialog({ isOpen, setIsOpen, product }: ProductDialogProps
                         <FormItem><FormLabel>Category</FormLabel><FormControl><Input {...field} placeholder="e.g. topwear" /></FormControl><FormMessage /></FormItem>
                     )} />
                 </div>
-                <FormField control={form.control} name="sizes" render={() => (
-                    <FormItem>
-                        <FormLabel>Sizes</FormLabel>
-                        <div className="flex gap-4">
-                        {allSizes.map((size) => (
-                            <FormField key={size} control={form.control} name="sizes" render={({ field }) => (
-                                <FormItem key={size} className="flex flex-row items-start space-x-3 space-y-0">
-                                <FormControl>
-                                    <Checkbox
-                                        checked={field.value?.includes(size)}
-                                        onCheckedChange={(checked) => {
-                                            return checked ? field.onChange([...field.value, size]) : field.onChange(field.value?.filter((value) => value !== size));
-                                        }}
-                                    />
-                                </FormControl>
-                                <FormLabel className="font-normal">{size}</FormLabel>
-                                </FormItem>
-                            )} />
-                        ))}
-                        </div>
-                        <FormMessage />
-                    </FormItem>
-                )} />
+                <div>
+                  <FormLabel>Sizes & Stock</FormLabel>
+                  <FormDescription>Enter the stock quantity for each size.</FormDescription>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
+                    {allSizes.map((size) => (
+                      <FormField
+                        key={size}
+                        control={form.control}
+                        name={`sizes.${size}`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{size}</FormLabel>
+                            <FormControl>
+                              <Input type="number" placeholder="0" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
               <div>
                 <FormField control={form.control} name="images" render={() => (
