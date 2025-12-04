@@ -8,6 +8,9 @@ import { SiteFooter } from '@/components/layout/site-footer';
 import { Toaster } from '@/components/ui/toaster';
 import { CartProvider } from '@/context/cart-context';
 import { FirebaseClientProvider } from '@/firebase';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Bot } from 'lucide-react';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -37,6 +40,15 @@ export default function RootLayout({
               <SiteFooter />
             </div>
             <Toaster />
+            <Link href="/chatbot" passHref>
+              <Button
+                variant="default"
+                className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg z-50 flex items-center justify-center"
+                aria-label="Open Chatbot"
+              >
+                <Bot className="h-8 w-8" />
+              </Button>
+            </Link>
           </CartProvider>
         </FirebaseClientProvider>
       </body>
