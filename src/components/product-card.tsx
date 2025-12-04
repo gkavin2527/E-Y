@@ -21,11 +21,7 @@ export function ProductCard({ product }: ProductCardProps) {
       <Link href={`/shops/products/${product.id}`}>
         <div className="overflow-hidden rounded-lg">
           <div className="relative aspect-[3/4] bg-muted">
-            {isSoldOut ? (
-                <Badge variant="destructive" className="absolute top-2 left-2 z-10">
-                    Sold Out
-                </Badge>
-            ) : isOnSale && (
+            {!isSoldOut && isOnSale && (
               <Badge variant="destructive" className="absolute top-2 left-2 z-10">
                 Sale
               </Badge>
@@ -44,7 +40,9 @@ export function ProductCard({ product }: ProductCardProps) {
               </div>
             )}
              {isSoldOut && (
-                <div className="absolute inset-0 bg-background/60 z-0" />
+                <div className="absolute inset-0 bg-background/70 z-10 flex items-center justify-center">
+                    <span className="text-destructive-foreground font-bold text-xl tracking-widest">SOLD OUT</span>
+                </div>
             )}
           </div>
         </div>
