@@ -1,18 +1,223 @@
+
 'use client';
 
 import { useParams } from 'next/navigation';
+import { useMemo, useState } from 'react';
+import Image from 'next/image';
+import { doc, getDoc } from 'firebase/firestore';
+import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import type { Product } from '@/lib/types';
+import { useCart } from '@/hooks/use-cart';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import Link from 'next/link';
+import { Star } from 'lucide-react';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
-export default function Test() { 
-    const params = useParams();
-    const productId = params.productId as string;
-    
+function ProductPageSkeleton() {
     return (
-        <div className="flex items-center justify-center h-96">
-            <div className="text-center p-8 border rounded-lg shadow-lg">
-                <h1 className="text-2xl font-bold text-primary">Dynamic Product Route Works!</h1>
-                <p className="mt-4 text-lg">The product ID from the URL is:</p>
-                <p className="mt-2 text-xl font-mono bg-muted text-foreground p-2 rounded">{productId}</p>
+      <div className="grid md:grid-cols-2 gap-8 lg:gap-16">
+        <div className="space-y-4">
+            <Skeleton className="aspect-square w-full" />
+            <div className="grid grid-cols-5 gap-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                    <Skeleton key={i} className="aspect-square" />
+                ))}
             </div>
         </div>
-    ); 
+        <div className="space-y-6">
+            <Skeleton className="h-8 w-3/4" />
+            <Skeleton className="h-6 w-1/4" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+            <div className="space-y-4">
+                <Skeleton className="h-6 w-16" />
+                <div className="flex gap-4">
+                    <Skeleton className="h-10 w-12" />
+                    <Skeleton className="h-10 w-12" />
+                    <Skeleton className="h-10 w-12" />
+                </div>
+            </div>
+            <Skeleton className="h-12 w-full" />
+        </div>
+      </div>
+    );
 }
+
+export default function ProductPage() {
+    const params = useParams();
+    const productId = params.productId as string;
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const { addItem } = useCart();
+  
+    const productDocRef = useMemoFirebase(
+      () => (firestore && productId ? doc(firestore, 'products', productId) : null),
+      [firestore, productId]
+    );
+  
+    const { data: product, isLoading, error } = useDoc<Product>(productDocRef);
+  
+    const [selectedSize, setSelectedSize] = useState<'S' | 'M' | 'L' | 'XL' | null>(null);
+    const [mainImage, setMainImage] = useState<string | null>(null);
+  
+    useMemo(() => {
+      if (product && product.images.length > 0) {
+        setMainImage(product.images[0]);
+      }
+    }, [product]);
+  
+    const handleAddToCart = () => {
+      if (!product) return;
+      if (!selectedSize) {
+        toast({
+          variant: 'destructive',
+          title: 'Please select a size',
+          description: 'You must select a size before adding to the cart.',
+        });
+        return;
+      }
+      addItem(product, selectedSize, 1);
+      toast({
+        title: 'Added to Cart',
+        description: `${product.name} (${selectedSize}) has been added to your cart.`,
+      });
+    };
+
+    if (isLoading) {
+      return <ProductPageSkeleton />;
+    }
+  
+    if (!product) {
+      return (
+        <div className="text-center py-20">
+          <h1 className="text-2xl font-bold">Product Not Found</h1>
+          <p className="text-muted-foreground mt-2">Sorry, we couldn't find the product you're looking for.</p>
+          <Button asChild className="mt-6">
+            <Link href="/">Go Home</Link>
+          </Button>
+        </div>
+      );
+    }
+  
+    const availableSizes = Object.entries(product.sizes || {})
+      .filter(([, stock]) => stock > 0)
+      .map(([size]) => size as 'S' | 'M' | 'L' | 'XL');
+
+    const firstImage = mainImage ?? PlaceHolderImages.find(p => p.id === product.images[0])?.imageUrl ?? "https://placehold.co/600x800";
+    const breadcrumbCategory = product.category || 'products';
+    const breadcrumbGender = product.gender || 'women';
+
+    return (
+      <div className="container mx-auto px-4 py-8">
+          <Breadcrumb className="mb-8">
+            <BreadcrumbList>
+                <BreadcrumbItem><Link href="/">Home</Link></BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem><Link href={`/shops/${breadcrumbGender}`}>{product.gender}</Link></BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem><Link href={`/shops/${breadcrumbGender}/${breadcrumbCategory}`}>{product.category}</Link></BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem><BreadcrumbPage>{product.name}</BreadcrumbPage></BreadcrumbItem>
+            </BreadcrumbList>
+        </Breadcrumb>
+        <div className="grid md:grid-cols-2 gap-8 lg:gap-16">
+          {/* Image Gallery */}
+          <div>
+            <div className="aspect-square w-full overflow-hidden rounded-lg mb-4 border bg-muted">
+                {firstImage && (
+                    <Image
+                        src={firstImage}
+                        alt={product.name}
+                        width={600}
+                        height={600}
+                        className="object-cover w-full h-full"
+                    />
+                )}
+            </div>
+            <div className="grid grid-cols-5 gap-2">
+              {product.images.map((imgSrc, index) => {
+                 const image = PlaceHolderImages.find(p => p.id === imgSrc)?.imageUrl ?? imgSrc;
+                return (
+                    <button
+                        key={index}
+                        onClick={() => setMainImage(image)}
+                        className={`aspect-square overflow-hidden rounded-md border-2 ${mainImage === image ? 'border-primary' : 'border-transparent'}`}
+                    >
+                         <Image
+                            src={image}
+                            alt={`${product.name} thumbnail ${index + 1}`}
+                            width={100}
+                            height={100}
+                            className="object-cover w-full h-full"
+                        />
+                    </button>
+                )
+              })}
+            </div>
+          </div>
+  
+          {/* Product Details */}
+          <div className="flex flex-col">
+            <h1 className="text-3xl font-bold font-headline">{product.name}</h1>
+            <div className="mt-2 flex items-center gap-2">
+                <div className="flex items-center">
+                    {[...Array(5)].map((_, i) => (
+                        <Star key={i} className={`h-5 w-5 ${i < product.rating ? 'text-primary fill-primary' : 'text-muted-foreground'}`} />
+                    ))}
+                </div>
+                <span className="text-muted-foreground text-sm">({product.rating.toFixed(1)})</span>
+            </div>
+            <p className="text-3xl font-semibold my-4">
+              ₹{product.price.toFixed(2)}
+              {product.originalPrice && (
+                  <span className="ml-2 text-xl text-muted-foreground line-through">
+                      ₹{product.originalPrice.toFixed(2)}
+                  </span>
+              )}
+            </p>
+  
+            <Separator className="my-4" />
+  
+            <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+  
+            <div className="mt-auto pt-8">
+              <div className="space-y-4">
+                  <h3 className="text-sm font-semibold">Size</h3>
+                  <RadioGroup
+                    value={selectedSize ?? ''}
+                    onValueChange={(value) => setSelectedSize(value as 'S' | 'M' | 'L' | 'XL')}
+                    className="flex gap-2"
+                  >
+                    {['S', 'M', 'L', 'XL'].map((size) => (
+                        <RadioGroupItem
+                            key={size}
+                            value={size}
+                            id={`size-${size}`}
+                            className="sr-only"
+                            disabled={!availableSizes.includes(size as 'S' | 'M' | 'L' | 'XL')}
+                        />
+                        
+                    ))}
+                  </RadioGroup>
+              </div>
+  
+              <Button onClick={handleAddToCart} size="lg" className="w-full mt-6">
+                Add to Cart
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+}
+
+    
+
+    
