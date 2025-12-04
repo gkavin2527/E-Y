@@ -18,6 +18,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import Link from 'next/link';
 import { Star } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
 
 function StarRating({ rating, size = 'md' }: { rating: number, size?: 'sm' | 'md' | 'lg' }) {
     const starSize = { sm: 'h-4 w-4', md: 'h-5 w-5', lg: 'h-6 w-6' }[size];
@@ -126,10 +127,6 @@ export default function ProductPage() {
       );
     }
   
-    const availableSizes = Object.entries(product.sizes || {})
-      .filter(([, stock]) => stock > 0)
-      .map(([size]) => size as 'S' | 'M' | 'L' | 'XL');
-
     const firstImage = mainImage ?? (product.images.length > 0 ? product.images[0] : "https://placehold.co/600x800");
     const breadcrumbCategory = product.category || 'products';
     const breadcrumbGender = product.gender || 'women';
@@ -212,21 +209,28 @@ export default function ProductPage() {
                     onValueChange={(value) => setSelectedSize(value as 'S' | 'M' | 'L' | 'XL')}
                     className="flex gap-2"
                   >
-                    {['S', 'M', 'L', 'XL'].map((size) => (
-                        <div key={size} className="flex items-center space-x-2">
-                           <RadioGroupItem
-                                value={size}
-                                id={`size-${size}`}
-                                disabled={!availableSizes.includes(size as 'S' | 'M' | 'L' | 'XL')}
-                           />
-                           <Label 
-                                htmlFor={`size-${size}`}
-                                className={`border rounded-md px-4 py-2 cursor-pointer ${selectedSize === size ? 'border-primary bg-primary/10' : ''} ${!availableSizes.includes(size as 'S' | 'M' | 'L' | 'XL') ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            >
-                                {size}
-                            </Label>
-                        </div>
-                    ))}
+                    {['S', 'M', 'L', 'XL'].map((size) => {
+                        const isAvailable = product.sizes[size] > 0;
+                        return (
+                            <div key={size} className="flex items-center space-x-2">
+                               <RadioGroupItem
+                                    value={size}
+                                    id={`size-${size}`}
+                                    disabled={!isAvailable}
+                               />
+                               <Label 
+                                    htmlFor={`size-${size}`}
+                                    className={cn(
+                                        'border rounded-md px-4 py-2 cursor-pointer',
+                                        !isAvailable && 'opacity-50 cursor-not-allowed line-through',
+                                        selectedSize === size && 'border-primary bg-primary/10'
+                                    )}
+                                >
+                                    {size}
+                                </Label>
+                            </div>
+                        )
+                    })}
                   </RadioGroup>
               </div>
   

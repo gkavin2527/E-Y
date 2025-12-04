@@ -13,13 +13,19 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const firstImage = product.images?.[0];
   const isOnSale = typeof product.originalPrice === 'number' && product.originalPrice > product.price;
+  const totalStock = Object.values(product.sizes || {}).reduce((sum, stock) => sum + stock, 0);
+  const isSoldOut = totalStock === 0;
 
   return (
     <div className="group relative">
       <Link href={`/shops/products/${product.id}`}>
         <div className="overflow-hidden rounded-lg">
           <div className="relative aspect-[3/4] bg-muted">
-            {isOnSale && (
+            {isSoldOut ? (
+                <Badge variant="destructive" className="absolute top-2 left-2 z-10">
+                    Sold Out
+                </Badge>
+            ) : isOnSale && (
               <Badge variant="destructive" className="absolute top-2 left-2 z-10">
                 Sale
               </Badge>
@@ -36,6 +42,9 @@ export function ProductCard({ product }: ProductCardProps) {
               <div className="w-full h-full flex items-center justify-center">
                 <span className="text-xs text-muted-foreground">No image</span>
               </div>
+            )}
+             {isSoldOut && (
+                <div className="absolute inset-0 bg-background/60 z-0" />
             )}
           </div>
         </div>
@@ -56,7 +65,7 @@ export function ProductCard({ product }: ProductCardProps) {
             )}
           </div>
         </div>
-        <Button variant="outline" size="icon" className="shrink-0">
+        <Button variant="outline" size="icon" className="shrink-0" disabled={isSoldOut}>
           <Plus />
         </Button>
       </div>
