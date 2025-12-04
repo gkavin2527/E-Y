@@ -36,7 +36,7 @@ export function CartSheet() {
                     </div>
                     <div className="ml-4 flex-1">
                       <h4 className="font-medium text-sm">
-                        <Link href={`/shop/products/${item.productId}`} className="hover:underline">
+                        <Link href={`/products/${item.productId}`} className="hover:underline">
                           {item.name}
                         </Link>
                       </h4>
