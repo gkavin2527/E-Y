@@ -4,7 +4,7 @@
 
 import { notFound, useParams } from 'next/navigation';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -82,7 +82,7 @@ export default function ProductPage() {
   const { data: product, isLoading: isProductLoading } = useDoc<Product>(productDocRef);
 
   const relatedProductsQuery = useMemoFirebase(() => {
-    if (!firestore || !product || !product.category) return null;
+    if (!firestore || !product) return null;
     return query(
       collection(firestore, 'products'),
       where('category', '==', product.category),
@@ -281,7 +281,3 @@ export default function ProductPage() {
     </div>
   );
 }
-
-    
-
-    
