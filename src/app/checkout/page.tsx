@@ -21,6 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import Link from 'next/link';
+import { TicketPercent } from 'lucide-react';
 
 const shippingSchema = z.object({
   fullName: z.string().min(2, { message: "Full name must be at least 2 characters." }),
@@ -41,9 +42,9 @@ const checkoutSchema = shippingSchema.merge(paymentSchema);
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
 // Mock coupon data
-const validCoupons: Record<string, { type: 'percentage' | 'flat'; value: number }> = {
-    'SAVE10': { type: 'percentage', value: 10 },
-    'FLAT50': { type: 'flat', value: 50 },
+const validCoupons: Record<string, { description: string, type: 'percentage' | 'flat'; value: number }> = {
+    'SAVE10': { description: "Get 10% off on your order", type: 'percentage', value: 10 },
+    'FLAT50': { description: "Get flat ₹50 off", type: 'flat', value: 50 },
 };
 
 export default function CheckoutPage() {
@@ -54,6 +55,7 @@ export default function CheckoutPage() {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState('');
   const [discount, setDiscount] = useState(0);
 
 
@@ -87,8 +89,8 @@ export default function CheckoutPage() {
   const subtotalWithShipping = totalPrice + shippingCost;
   const totalWithDiscount = subtotalWithShipping - discount;
   
-  const handleApplyCoupon = () => {
-    const coupon = validCoupons[couponCode.toUpperCase()];
+  const applyCoupon = (code: string) => {
+    const coupon = validCoupons[code.toUpperCase()];
     if (coupon) {
       let discountValue = 0;
       if (coupon.type === 'percentage') {
@@ -97,19 +99,30 @@ export default function CheckoutPage() {
         discountValue = coupon.value;
       }
       setDiscount(discountValue);
+      setAppliedCoupon(code.toUpperCase());
       toast({
         title: "Coupon Applied!",
         description: `You've received a discount of ₹${discountValue.toFixed(2)}.`,
       });
     } else {
       setDiscount(0);
+      setAppliedCoupon('');
       toast({
         variant: 'destructive',
         title: 'Invalid Coupon',
         description: 'The coupon code you entered is not valid.',
       });
     }
+  }
+
+  const handleApplyCoupon = () => {
+    applyCoupon(couponCode);
   };
+
+  const handleSelectCoupon = (code: string) => {
+    setCouponCode(code);
+    applyCoupon(code);
+  }
 
 
   const onSubmit = async (data: CheckoutFormValues) => {
@@ -247,20 +260,30 @@ export default function CheckoutPage() {
           </Form>
         </div>
 
-        <div>
-            <Card className="mb-8">
+        <div className='space-y-8'>
+            <Card>
                  <CardHeader>
-                    <CardTitle>Apply Coupon</CardTitle>
+                    <CardTitle>Available Offers</CardTitle>
                  </CardHeader>
-                 <CardContent>
-                    <div className="flex gap-2">
-                        <Input 
-                            placeholder="Enter coupon code" 
-                            value={couponCode}
-                            onChange={(e) => setCouponCode(e.target.value)}
-                        />
-                        <Button onClick={handleApplyCoupon}>Apply</Button>
-                    </div>
+                 <CardContent className="space-y-4">
+                    {Object.entries(validCoupons).map(([code, { description }]) => (
+                        <div key={code} className="flex items-center justify-between p-3 rounded-lg border border-dashed border-primary/50 bg-primary/5">
+                            <div className="flex items-center gap-3">
+                                <TicketPercent className="h-6 w-6 text-primary" />
+                                <div>
+                                    <p className="font-semibold text-primary">{code}</p>
+                                    <p className="text-sm text-muted-foreground">{description}</p>
+                                </div>
+                            </div>
+                            <Button 
+                                variant={appliedCoupon === code ? "secondary" : "ghost"} 
+                                size="sm" 
+                                onClick={() => handleSelectCoupon(code)}
+                            >
+                                {appliedCoupon === code ? "Applied" : "Apply"}
+                            </Button>
+                        </div>
+                    ))}
                  </CardContent>
             </Card>
             <Card>
@@ -297,7 +320,7 @@ export default function CheckoutPage() {
                         </div>
                         {discount > 0 && (
                             <div className="flex justify-between text-sm text-green-600">
-                                <span className="text-muted-foreground">Discount</span>
+                                <span className="font-medium">Discount ({appliedCoupon})</span>
                                 <span>- ₹{discount.toFixed(2)}</span>
                             </div>
                         )}
