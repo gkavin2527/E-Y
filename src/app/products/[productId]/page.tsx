@@ -82,7 +82,7 @@ export default function ProductPage() {
   const { data: product, isLoading: isProductLoading } = useDoc<Product>(productDocRef);
 
   const relatedProductsQuery = useMemoFirebase(() => {
-    if (!firestore || !product) return null;
+    if (!firestore || !product || !product.category) return null;
     return query(
       collection(firestore, 'products'),
       where('category', '==', product.category),
@@ -106,13 +106,7 @@ export default function ProductPage() {
   }
 
   if (!product) {
-    // This is the correct way to handle not found after loading is complete.
-    // If there's still no product, it's a valid 404.
-    if (!isProductLoading) {
-        notFound();
-    }
-    // Otherwise, we are still loading, so show the skeleton.
-    return <ProductPageSkeleton />;
+    notFound();
   }
   
   const totalStock = Object.values(product.sizes).reduce((sum, q) => sum + q, 0);
@@ -214,8 +208,8 @@ export default function ProductPage() {
                 <h1 className="text-3xl font-bold font-headline">{product.name}</h1>
                 <div className="flex items-baseline gap-4">
                     <p className={`text-2xl font-semibold ${isOnSale ? 'text-destructive' : 'text-foreground'}`}>₹{product.price.toFixed(2)}</p>
-                    {isOnSale && (
-                        <p className="text-xl text-muted-foreground line-through">₹{product.originalPrice?.toFixed(2)}</p>
+                    {isOnSale && product.originalPrice && (
+                        <p className="text-xl text-muted-foreground line-through">₹{product.originalPrice.toFixed(2)}</p>
                     )}
                 </div>
                 <ProductRating rating={product.rating} />
@@ -281,3 +275,4 @@ export default function ProductPage() {
     </div>
   );
 }
+
