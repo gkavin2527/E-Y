@@ -41,7 +41,7 @@ export function ProductCard({ product }: ProductCardProps) {
           <p className="font-semibold mt-1 text-foreground">₹{product.price.toFixed(2)}</p>
         </div>
         <Button variant="outline" size="icon" className="shrink-0">
-          <Plus className="h-4 w-4" />
+          <Plus />
         </Button>
       </div>
     </div>
