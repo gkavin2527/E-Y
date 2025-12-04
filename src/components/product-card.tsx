@@ -17,7 +17,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div className="group relative">
-      <Link href={`/shop/products/${product.id}`}>
+      <Link href={`/products/${product.id}`}>
         <div className="overflow-hidden rounded-lg">
           <div className="relative aspect-[3/4] bg-muted">
             {isOnSale && (
@@ -44,7 +44,7 @@ export function ProductCard({ product }: ProductCardProps) {
       <div className="mt-4 flex justify-between">
         <div>
           <h3 className="font-medium text-sm text-foreground truncate">
-             <Link href={`/shop/products/${product.id}`}>{product.name}</Link>
+             <Link href={`/products/${product.id}`}>{product.name}</Link>
           </h3>
           <div className="flex items-baseline gap-2 mt-1">
             <p className={`font-semibold ${isOnSale ? 'text-destructive' : 'text-foreground'}`}>
@@ -64,5 +64,7 @@ export function ProductCard({ product }: ProductCardProps) {
     </div>
   );
 }
+
+    
 
     
