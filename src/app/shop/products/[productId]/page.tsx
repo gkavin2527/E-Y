@@ -177,7 +177,7 @@ export default function ProductPage() {
                  {product.gender && (
                     <BreadcrumbItem>
                         <BreadcrumbLink asChild>
-                            <Link href={`/shop/${product.gender}`}>{product.gender.charAt(0).toUpperCase() + product.gender.slice(1)}</Link>
+                            <Link href={`/shops/${product.gender}`}>{product.gender.charAt(0).toUpperCase() + product.gender.slice(1)}</Link>
                         </BreadcrumbLink>
                     </BreadcrumbItem>
                 )}
@@ -186,7 +186,7 @@ export default function ProductPage() {
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
                             <BreadcrumbLink asChild>
-                                <Link href={`/shop/${product.gender}/${product.category}`}>{product.category.charAt(0).toUpperCase() + product.category.slice(1)}</Link>
+                                <Link href={`/shops/${product.gender}/${product.category}`}>{product.category.charAt(0).toUpperCase() + product.category.slice(1)}</Link>
                             </BreadcrumbLink>
                         </BreadcrumbItem>
                     </>

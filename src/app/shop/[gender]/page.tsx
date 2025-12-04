@@ -43,7 +43,7 @@ export default function GenderPage() {
           {genderCategories.map(category => {
             const categoryImage = PlaceHolderImages.find(p => p.id === category.image);
             return (
-              <Link href={`/shop/${gender}/${category.slug}`} key={category.slug} className="group">
+              <Link href={`/shops/${gender}/${category.slug}`} key={category.slug} className="group">
                 <div className="relative aspect-[3/4] overflow-hidden rounded-lg">
                   {categoryImage && (
                     <Image

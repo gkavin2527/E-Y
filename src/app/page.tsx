@@ -60,7 +60,7 @@ export default function Home() {
             Discover curated collections of modern essentials. Quality craftsmanship for your everyday wardrobe.
           </p>
           <Button asChild size="lg" className="mt-8">
-            <Link href="/shop/women">Shop Now</Link>
+            <Link href="/shops/women">Shop Now</Link>
           </Button>
         </div>
       </section>
@@ -68,7 +68,7 @@ export default function Home() {
       <section className="container mx-auto px-4">
         <h2 className="text-3xl font-headline font-bold text-center">Shop Collections</h2>
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-          <Link href="/shop/men" className="group">
+          <Link href="/shops/men" className="group">
             <Card className="overflow-hidden">
               <CardContent className="p-0">
                 <div className="relative h-96">
@@ -89,7 +89,7 @@ export default function Home() {
               </CardContent>
             </Card>
           </Link>
-          <Link href="/shop/women" className="group">
+          <Link href="/shops/women" className="group">
             <Card className="overflow-hidden">
               <CardContent className="p-0">
                 <div className="relative h-96">
@@ -127,7 +127,7 @@ export default function Home() {
         </div>
         <div className="text-center mt-8">
           <Button variant="outline" asChild>
-            <Link href="/shop/women">View All</Link>
+            <Link href="/shops/women">View All</Link>
           </Button>
         </div>
       </section>

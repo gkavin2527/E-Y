@@ -63,7 +63,7 @@ export default function CategoryPage() {
                 <BreadcrumbItem>
                      {gender && (
                         <BreadcrumbLink asChild>
-                            <Link href={`/shop/${gender.slug}`}>{gender.name}</Link>
+                            <Link href={`/shops/${gender.slug}`}>{gender.name}</Link>
                         </BreadcrumbLink>
                      )}
                 </BreadcrumbItem>
