@@ -43,6 +43,8 @@ type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
 // Mock coupon data
 const validCoupons: Record<string, { description: string, type: 'percentage' | 'flat'; value: number }> = {
+    'SALE20': { description: "Get 20% off on your order", type: 'percentage', value: 20 },
+    'GET100': { description: "Get flat ₹100 off", type: 'flat', value: 100 },
     'SAVE10': { description: "Get 10% off on your order", type: 'percentage', value: 10 },
     'FLAT50': { description: "Get flat ₹50 off", type: 'flat', value: 50 },
 };
@@ -337,3 +339,5 @@ export default function CheckoutPage() {
     </div>
   );
 }
+
+    
