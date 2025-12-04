@@ -11,11 +11,10 @@ export function MainNav() {
   const navLinks = [
     { href: '/shop/men', label: 'Men' },
     { href: '/shop/women', label: 'Women' },
-    { href: '/chatbot', label: 'Chatbot' },
   ];
 
   return (
-    <div className="flex items-center space-x-4 lg:space-x-6 flex-1">
+    <div className="flex items-center space-x-4 lg:space-x-6">
       <nav className="hidden md:flex items-center space-x-4 lg:space-x-6">
         {navLinks.map((link) => (
           <Link
