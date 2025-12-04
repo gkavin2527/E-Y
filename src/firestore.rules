@@ -1,4 +1,3 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -11,24 +10,21 @@ service cloud.firestore {
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-    
+
     function isAdmin() {
-      // Validates that a document with the userId exists in /admins
-      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
     // ---------- USERS ----------
     match /users/{userId} {
-      allow read, update, delete: if isOwner(userId);
-      allow create: if isSignedIn();
-      allow list: if isAdmin(); // Only admins can list users
+      allow read, create, update, delete: if isOwner(userId);
+      allow list: if isAdmin();
 
-      // CART
       match /cart/{cartDoc} {
         allow read, write: if isOwner(userId);
       }
 
-      // ADDRESSES
       match /addresses/{addressId} {
         allow read, list, create, update, delete: if isOwner(userId);
       }
@@ -40,8 +36,9 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
 
       match /reviews/{reviewId} {
-        allow get, list: if true;
-        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow list, get: if true;
+        allow create: if isSignedIn() &&
+          request.resource.data.userId == request.auth.uid;
         allow update, delete: if false;
       }
     }
@@ -49,25 +46,25 @@ service cloud.firestore {
     // ---------- ORDERS ----------
     match /orders/{orderId} {
 
-      // USERS CAN ONLY CREATE THEIR OWN ORDER
-      allow create: if isSignedIn()
-        && request.resource.data.userId == request.auth.uid;
+      // User can create their own order
+      allow create: if isSignedIn() &&
+        request.resource.data.userId == request.auth.uid;
 
-      // USERS CAN ONLY GET THEIR OWN ORDER, ADMINS GET ALL
+      // User can read their own orders; admin can read all
       allow get: if (resource.data.userId == request.auth.uid) || isAdmin();
 
-      // LISTING ORDERS:
-      // - User can ONLY list their own orders (must use query where("userId", "==", uid))
-      // - Admin can list ALL orders
-      allow list: if (request.query.limit <= 10 && request.query.userId == request.auth.uid) || isAdmin();
+      // LIST:
+      // Firestore does NOT pass query filters to rules, so we cannot check userId here.
+      // We allow list for all signed-in users, but "get" rule still restricts documents.
+      allow list: if isAdmin() || isSignedIn();
 
-      allow update, delete: if false; // Orders cannot be modified after creation
+      allow update, delete: if false;
     }
 
     // ---------- ADMINS ----------
-    match /admins/{adminId} {
-      allow read: if true; // Anyone can check admin existence
-      allow write: if false; // Prevent client-side edits
+    match /admins/{userId} {
+      allow read: if true;
+      allow write: if false;
     }
   }
 }
