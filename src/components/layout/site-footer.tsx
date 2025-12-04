@@ -18,9 +18,9 @@ export function SiteFooter() {
           <div>
             <h3 className="font-semibold mb-4">Shop</h3>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/men" className="text-muted-foreground hover:text-primary">Men</Link></li>
-              <li><Link href="/women" className="text-muted-foreground hover:text-primary">Women</Link></li>
-              <li><Link href="/men/accessories" className="text-muted-foreground hover:text-primary">Accessories</Link></li>
+              <li><Link href="/shop/men" className="text-muted-foreground hover:text-primary">Men</Link></li>
+              <li><Link href="/shop/women" className="text-muted-foreground hover:text-primary">Women</Link></li>
+              <li><Link href="/shop/men/accessories" className="text-muted-foreground hover:text-primary">Accessories</Link></li>
             </ul>
           </div>
           

@@ -36,7 +36,7 @@ export function CartSheet() {
                     </div>
                     <div className="ml-4 flex-1">
                       <h4 className="font-medium text-sm">
-                        <Link href={`/products/${item.productId}`} className="hover:underline">
+                        <Link href={`/shop/products/${item.productId}`} className="hover:underline">
                           {item.name}
                         </Link>
                       </h4>
@@ -82,7 +82,7 @@ export function CartSheet() {
           <p className="text-sm text-muted-foreground mt-2">Add items to see them here.</p>
           <SheetClose asChild>
             <Button asChild className="mt-4">
-              <Link href="/women">Start Shopping</Link>
+              <Link href="/shop/women">Start Shopping</Link>
             </Button>
           </SheetClose>
         </div>

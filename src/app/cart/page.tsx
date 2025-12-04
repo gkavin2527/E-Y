@@ -22,7 +22,7 @@ export default function CartPage() {
         <h1 className="text-3xl font-bold font-headline mb-4">Your Cart is Empty</h1>
         <p className="text-muted-foreground mb-6">Looks like you haven't added anything to your cart yet.</p>
         <Button asChild>
-          <Link href="/women">Start Shopping</Link>
+          <Link href="/shop/women">Start Shopping</Link>
         </Button>
       </div>
     );
@@ -58,7 +58,7 @@ export default function CartPage() {
                                 <div className="ml-4 flex-1 flex flex-col sm:flex-row justify-between">
                                     <div className='mb-4 sm:mb-0'>
                                         <h3 className="font-medium">
-                                            <Link href={`/products/${item.productId}`} className="hover:underline">{item.name}</Link>
+                                            <Link href={`/shop/products/${item.productId}`} className="hover:underline">{item.name}</Link>
                                         </h3>
                                         <p className="text-sm text-muted-foreground">Size: {item.size}</p>
                                         <p className="text-lg font-semibold mt-2">₹{item.price.toFixed(2)}</p>

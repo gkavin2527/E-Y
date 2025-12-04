@@ -9,8 +9,8 @@ export function MainNav() {
   const pathname = usePathname();
 
   const navLinks = [
-    { href: '/men', label: 'Men' },
-    { href: '/women', label: 'Women' },
+    { href: '/shop/men', label: 'Men' },
+    { href: '/shop/women', label: 'Women' },
   ];
 
   return (

@@ -62,7 +62,7 @@ export default function CategoryPage() {
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
                     <BreadcrumbLink asChild>
-                        <Link href={`/${gender.slug}`}>{gender.name}</Link>
+                        <Link href={`/shop/${gender.slug}`}>{gender.name}</Link>
                     </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
