@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -11,8 +12,9 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() &&
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      // In a real app, this should check a custom claim or a document in a secure 'admins' collection.
+      // For this starter, we'll check for a document in an 'admins' collection.
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
     match /users/{userId} {
@@ -34,26 +36,27 @@ service cloud.firestore {
 
       match /reviews/{reviewId} {
         allow list, get: if true;
-        allow create: if isSignedIn() &&
-          request.resource.data.userId == request.auth.uid;
-        allow update, delete: if false;
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow update, delete: if false; // Users shouldn't edit/delete reviews after posting
       }
     }
 
     match /orders/{orderId} {
-      allow create: if isSignedIn() &&
-        request.resource.data.userId == request.auth.uid;
-
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      
+      // A user can get their own order, or an admin can get any order.
       allow get: if (resource.data.userId == request.auth.uid) || isAdmin();
       
+      // Admins can list all orders. A user can list orders ONLY if they are querying for their own orders.
       allow list: if isAdmin() || (isSignedIn() && request.query.where.userId == request.auth.uid);
 
+      // Prevent orders from being updated or deleted from the client.
       allow update, delete: if false;
     }
 
     match /admins/{userId} {
-      allow read: if true;
-      allow write: if false;
+        allow read: if true;
+        allow write: if false; // To make someone an admin, create a doc in Firestore console.
     }
   }
 }

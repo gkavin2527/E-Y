@@ -1,8 +1,10 @@
+
 'use client';
 
 import {
   LogOut,
   User,
+  FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -81,7 +83,12 @@ export function UserButton() {
             <span>Profile</span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild><Link href="/account/orders">Orders</Link></DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/account/orders" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            <span>My Orders</span>
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
             <LogOut className="h-4 w-4" />
