@@ -10,25 +10,26 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { collection, addDoc, serverTimestamp, doc } from 'firebase/firestore';
+import { cn } from '@/lib/utils';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import Link from 'next/link';
-import { CheckCircle, Home, Plus, TicketPercent } from 'lucide-react';
+import { CheckCircle, Home, Plus, TicketPercent, CreditCard, Banknote, Landmark, Wallet } from 'lucide-react';
 import type { UserProfile, Address } from '@/lib/types';
 import { AddressDialog } from '@/components/account/address-dialog';
-import { cn } from '@/lib/utils';
 
 
 const paymentSchema = z.object({
-    cardNumber: z.string().regex(/^\d{16}$/, 'Card number must be 16 digits.'),
-    expiryDate: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, 'Expiry date must be in MM/YY format.'),
-    cvc: z.string().regex(/^\d{3,4}$/, 'CVC must be 3 or 4 digits.'),
+    cardNumber: z.string().regex(/^\d{16}$/, 'Card number must be 16 digits.').optional().or(z.literal('')),
+    expiryDate: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, 'Expiry date must be in MM/YY format.').optional().or(z.literal('')),
+    cvc: z.string().regex(/^\d{3,4}$/, 'CVC must be 3 or 4 digits.').optional().or(z.literal('')),
 });
 
 type PaymentFormValues = z.infer<typeof paymentSchema>;
@@ -71,6 +72,7 @@ export default function CheckoutPage() {
   const [discount, setDiscount] = useState(0);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('card');
 
 
   const userDocRef = useMemoFirebase(
@@ -134,11 +136,16 @@ export default function CheckoutPage() {
     applyCoupon(code);
   }
 
-  const onSubmit = async (data: PaymentFormValues) => {
+  const handlePlaceOrder = async (data: PaymentFormValues) => {
     if (!user || !firestore || items.length === 0 || !selectedAddressId) {
         if (!selectedAddressId) {
             toast({ variant: 'destructive', title: "No Address Selected", description: "Please select or add a shipping address." });
         }
+        return;
+    }
+
+    if (paymentMethod === 'card' && !paymentForm.formState.isValid) {
+        toast({ variant: 'destructive', title: "Invalid Card Details", description: "Please check your card information and try again." });
         return;
     }
 
@@ -226,25 +233,44 @@ export default function CheckoutPage() {
                     <CardDescription>All transactions are secure and encrypted.</CardDescription>
                 </CardHeader>
                  <CardContent>
-                    <Form {...paymentForm}>
-                        <form id="payment-form" onSubmit={paymentForm.handleSubmit(onSubmit)} className="space-y-4">
-                             <FormField control={paymentForm.control} name="cardNumber" render={({ field }) => (
-                                <FormItem><FormLabel>Card Number</FormLabel><FormControl><Input placeholder="0000 0000 0000 0000" {...field} /></FormControl><FormMessage /></FormItem>
-                            )} />
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField control={paymentForm.control} name="expiryDate" render={({ field }) => (
-                                    <FormItem><FormLabel>Expiry Date</FormLabel><FormControl><Input placeholder="MM/YY" {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                                <FormField control={paymentForm.control} name="cvc" render={({ field }) => (
-                                    <FormItem><FormLabel>CVC</FormLabel><FormControl><Input placeholder="123" {...field} /></FormControl><FormMessage /></FormItem>
-                                )} />
-                            </div>
-                        </form>
-                    </Form>
+                    <Tabs defaultValue="card" className="w-full" onValueChange={setPaymentMethod}>
+                        <TabsList className="grid w-full grid-cols-4">
+                            <TabsTrigger value="card"><CreditCard className="mr-2" />Card</TabsTrigger>
+                            <TabsTrigger value="netbanking"><Landmark className="mr-2" />Banking</TabsTrigger>
+                            <TabsTrigger value="upi"><Wallet className="mr-2" />UPI</TabsTrigger>
+                            <TabsTrigger value="cod"><Banknote className="mr-2" />COD</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="card" className="pt-6">
+                            <Form {...paymentForm}>
+                                <form id="payment-form" onSubmit={paymentForm.handleSubmit(handlePlaceOrder)} className="space-y-4">
+                                     <FormField control={paymentForm.control} name="cardNumber" render={({ field }) => (
+                                        <FormItem><FormLabel>Card Number</FormLabel><FormControl><Input placeholder="0000 0000 0000 0000" {...field} /></FormControl><FormMessage /></FormItem>
+                                    )} />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormField control={paymentForm.control} name="expiryDate" render={({ field }) => (
+                                            <FormItem><FormLabel>Expiry Date</FormLabel><FormControl><Input placeholder="MM/YY" {...field} /></FormControl><FormMessage /></FormItem>
+                                        )} />
+                                        <FormField control={paymentForm.control} name="cvc" render={({ field }) => (
+                                            <FormItem><FormLabel>CVC</FormLabel><FormControl><Input placeholder="123" {...field} /></FormControl><FormMessage /></FormItem>
+                                        )} />
+                                    </div>
+                                </form>
+                            </Form>
+                        </TabsContent>
+                        <TabsContent value="netbanking" className="pt-6 text-center">
+                            <p className="text-muted-foreground">Net Banking is not available yet.</p>
+                        </TabsContent>
+                        <TabsContent value="upi" className="pt-6 text-center">
+                             <p className="text-muted-foreground">UPI is not available yet.</p>
+                        </TabsContent>
+                         <TabsContent value="cod" className="pt-6 text-center">
+                             <p className="text-muted-foreground">You will pay upon delivery.</p>
+                        </TabsContent>
+                    </Tabs>
                  </CardContent>
               </Card>
 
-              <Button type="submit" form="payment-form" className="w-full" size="lg" disabled={isProcessing}>
+              <Button form="payment-form" type="submit" className="w-full" size="lg" disabled={isProcessing}>
                 {isProcessing ? 'Processing...' : `Place Order - ₹${totalWithDiscount.toFixed(2)}`}
               </Button>
         </div>
@@ -331,3 +357,5 @@ export default function CheckoutPage() {
     </>
   );
 }
+
+    
