@@ -1,10 +1,9 @@
 
-
 'use client';
 
 import { notFound, useParams } from 'next/navigation';
 import Image from 'next/image';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -105,12 +104,8 @@ export default function ProductPage() {
     return <ProductPageSkeleton />;
   }
   
-  if (!isProductLoading && !product) {
-    notFound();
-  }
-
   if (!product) {
-    return <ProductPageSkeleton />;
+    return notFound();
   }
   
   const totalStock = Object.values(product.sizes).reduce((sum, q) => sum + q, 0);
@@ -178,12 +173,16 @@ export default function ProductPage() {
                         <Link href={`/shop/${product.gender}`}>{product.gender.charAt(0).toUpperCase() + product.gender.slice(1)}</Link>
                     </BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                    <BreadcrumbLink asChild>
-                        <Link href={`/shop/${product.gender}/${product.category}`}>{product.category.charAt(0).toUpperCase() + product.category.slice(1)}</Link>
-                    </BreadcrumbLink>
-                </BreadcrumbItem>
+                {product.category && (
+                    <>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                            <BreadcrumbLink asChild>
+                                <Link href={`/shop/${product.gender}/${product.category}`}>{product.category.charAt(0).toUpperCase() + product.category.slice(1)}</Link>
+                            </BreadcrumbLink>
+                        </BreadcrumbItem>
+                    </>
+                )}
                 <BreadcrumbSeparator />
                 <BreadcrumbItem><BreadcrumbPage>{product.name}</BreadcrumbPage></BreadcrumbItem>
             </BreadcrumbList>
