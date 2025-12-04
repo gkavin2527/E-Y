@@ -6,7 +6,7 @@ export type Product = {
   originalPrice?: number;
   rating: number;
   images: string[];
-  category: string;
+  category?: string;
   gender: 'men' | 'women';
   sizes: Record<string, number>;
 };

@@ -82,7 +82,7 @@ export default function ProductPage() {
   const { data: product, isLoading: isProductLoading } = useDoc<Product>(productDocRef);
 
   const relatedProductsQuery = useMemoFirebase(() => {
-    if (!firestore || !product) return null;
+    if (!firestore || !product || !product.category) return null;
     return query(
       collection(firestore, 'products'),
       where('category', '==', product.category),
@@ -180,12 +180,16 @@ export default function ProductPage() {
                         <Link href={`/shop/${product.gender}`}>{product.gender.charAt(0).toUpperCase() + product.gender.slice(1)}</Link>
                     </BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                    <BreadcrumbLink asChild>
-                        <Link href={`/shop/${product.gender}/${product.category}`}>{product.category.charAt(0).toUpperCase() + product.category.slice(1)}</Link>
-                    </BreadcrumbLink>
-                </BreadcrumbItem>
+                {product.category && (
+                    <>
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem>
+                            <BreadcrumbLink asChild>
+                                <Link href={`/shop/${product.gender}/${product.category}`}>{product.category.charAt(0).toUpperCase() + product.category.slice(1)}</Link>
+                            </BreadcrumbLink>
+                        </BreadcrumbItem>
+                    </>
+                )}
                 <BreadcrumbSeparator />
                 <BreadcrumbItem><BreadcrumbPage>{product.name}</BreadcrumbPage></BreadcrumbItem>
             </BreadcrumbList>
