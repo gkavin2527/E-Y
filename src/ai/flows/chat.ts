@@ -7,7 +7,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { generate } from 'genkit';
 import { ChatMessageSchema } from './types';
 import type { ChatMessage } from './types';
 
@@ -40,7 +39,7 @@ const chatFlow = ai.defineFlow(
     outputSchema: ChatOutputSchema,
   },
   async ({ history }) => {
-    const response = await generate({
+    const response = await ai.generate({
       model: ai.model,
       prompt: {
         messages: history,
