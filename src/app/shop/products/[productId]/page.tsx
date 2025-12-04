@@ -106,7 +106,13 @@ export default function ProductPage() {
   }
 
   if (!product) {
-    notFound();
+    // This is the correct way to handle not found after loading is complete.
+    // If there's still no product, it's a valid 404.
+    if (!isProductLoading) {
+        notFound();
+    }
+    // Otherwise, we are still loading, so show the skeleton.
+    return <ProductPageSkeleton />;
   }
   
   const totalStock = Object.values(product.sizes).reduce((sum, q) => sum + q, 0);
