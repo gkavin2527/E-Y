@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -54,8 +55,9 @@ service cloud.firestore {
       // User can read their own orders; admin can read any
       allow get: if (resource.data.userId == request.auth.uid) || isAdmin();
 
-      // An admin can list all orders.
-      allow list: if isAdmin();
+      // Admins can list all orders.
+      // Users can list orders ONLY if they are querying for their own orders.
+      allow list: if isAdmin() || request.query.where.userId == request.auth.uid;
 
       allow update, delete: if false;
     }

@@ -1,5 +1,4 @@
 
-
 export type Product = {
   id: string;
   name: string;
@@ -55,6 +54,7 @@ export type Order = {
   createdAt: { seconds: number; nanoseconds: number; }; // Firestore Timestamp type
   total: number;
   items: OrderItem[];
+  shippingAddress: Address;
 };
 
 export type Address = {

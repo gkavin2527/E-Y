@@ -4,9 +4,9 @@
 import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
-import { doc, collection, query, orderBy } from 'firebase/firestore';
-import { useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
-import type { Product, Review } from '@/lib/types';
+import { doc, collection, query, orderBy, where } from 'firebase/firestore';
+import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser } from '@/firebase';
+import type { Product, Review, Order, OrderItem } from '@/lib/types';
 import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -16,8 +16,9 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import Link from 'next/link';
-import { Star } from 'lucide-react';
+import { Star, CheckCircle } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 
 function StarRating({ rating, size = 'md' }: { rating: number, size?: 'sm' | 'md' | 'lg' }) {
     const starSize = { sm: 'h-4 w-4', md: 'h-5 w-5', lg: 'h-6 w-6' }[size];
@@ -66,6 +67,7 @@ export default function ProductPage() {
     const params = useParams();
     const productId = params.productId as string;
     const firestore = useFirestore();
+    const { user } = useUser();
     const { toast } = useToast();
     const { addItem } = useCart();
   
@@ -79,9 +81,20 @@ export default function ProductPage() {
         [productDocRef]
     );
   
+    const userOrdersQuery = useMemoFirebase(() => {
+        if (!firestore || !user) return null;
+        return query(collection(firestore, 'orders'), where('userId', '==', user.uid));
+    }, [firestore, user]);
+
     const { data: product, isLoading: isProductLoading } = useDoc<Product>(productDocRef);
     const { data: reviews, isLoading: areReviewsLoading } = useCollection<Review>(reviewsQuery);
-  
+    const { data: userOrders, isLoading: areOrdersLoading } = useCollection<Order>(userOrdersQuery);
+
+    const hasPurchased = useMemo(() => {
+        if (!userOrders || !productId) return false;
+        return userOrders.some(order => order.items.some((item: OrderItem) => item.productId === productId));
+    }, [userOrders, productId]);
+
     const [selectedSize, setSelectedSize] = useState<'S' | 'M' | 'L' | 'XL' | null>(null);
     const [mainImage, setMainImage] = useState<string | null>(null);
   
@@ -108,7 +121,7 @@ export default function ProductPage() {
       });
     };
 
-    const isLoading = isProductLoading || areReviewsLoading;
+    const isLoading = isProductLoading || areReviewsLoading || areOrdersLoading;
 
     if (isLoading) {
       return <ProductPageSkeleton />;
@@ -184,7 +197,15 @@ export default function ProductPage() {
   
           {/* Product Details */}
           <div className="flex flex-col">
-            <h1 className="text-3xl font-bold font-headline">{product.name}</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold font-headline">{product.name}</h1>
+              {hasPurchased && (
+                <Badge variant="secondary" className="flex items-center gap-1.5 whitespace-nowrap">
+                  <CheckCircle className="h-3 w-3" />
+                  You've purchased this
+                </Badge>
+              )}
+            </div>
             <div className="mt-2 flex items-center gap-2">
                 <StarRating rating={product.rating} />
                 <span className="text-muted-foreground text-sm">({product.rating.toFixed(1)} from {product.reviewCount || 0} reviews)</span>
