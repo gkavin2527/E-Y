@@ -4,7 +4,7 @@
 import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import type { Product } from '@/lib/types';
 import { useCart } from '@/hooks/use-cart';
@@ -17,7 +17,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import Link from 'next/link';
 import { Star } from 'lucide-react';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 function ProductPageSkeleton() {
     return (
@@ -110,7 +109,7 @@ export default function ProductPage() {
       .filter(([, stock]) => stock > 0)
       .map(([size]) => size as 'S' | 'M' | 'L' | 'XL');
 
-    const firstImage = mainImage ?? PlaceHolderImages.find(p => p.id === product.images[0])?.imageUrl ?? "https://placehold.co/600x800";
+    const firstImage = mainImage ?? (product.images.length > 0 ? product.images[0] : "https://placehold.co/600x800");
     const breadcrumbCategory = product.category || 'products';
     const breadcrumbGender = product.gender || 'women';
 
@@ -143,15 +142,14 @@ export default function ProductPage() {
             </div>
             <div className="grid grid-cols-5 gap-2">
               {product.images.map((imgSrc, index) => {
-                 const image = PlaceHolderImages.find(p => p.id === imgSrc)?.imageUrl ?? imgSrc;
                 return (
                     <button
                         key={index}
-                        onClick={() => setMainImage(image)}
-                        className={`aspect-square overflow-hidden rounded-md border-2 ${mainImage === image ? 'border-primary' : 'border-transparent'}`}
+                        onClick={() => setMainImage(imgSrc)}
+                        className={`aspect-square overflow-hidden rounded-md border-2 ${mainImage === imgSrc ? 'border-primary' : 'border-transparent'}`}
                     >
                          <Image
-                            src={image}
+                            src={imgSrc}
                             alt={`${product.name} thumbnail ${index + 1}`}
                             width={100}
                             height={100}
@@ -196,14 +194,19 @@ export default function ProductPage() {
                     className="flex gap-2"
                   >
                     {['S', 'M', 'L', 'XL'].map((size) => (
-                        <RadioGroupItem
-                            key={size}
-                            value={size}
-                            id={`size-${size}`}
-                            className="sr-only"
-                            disabled={!availableSizes.includes(size as 'S' | 'M' | 'L' | 'XL')}
-                        />
-                        
+                        <div key={size} className="flex items-center space-x-2">
+                           <RadioGroupItem
+                                value={size}
+                                id={`size-${size}`}
+                                disabled={!availableSizes.includes(size as 'S' | 'M' | 'L' | 'XL')}
+                           />
+                           <Label 
+                                htmlFor={`size-${size}`}
+                                className={`border rounded-md px-4 py-2 cursor-pointer ${selectedSize === size ? 'border-primary bg-primary/10' : ''} ${!availableSizes.includes(size as 'S' | 'M' | 'L' | 'XL') ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                                {size}
+                            </Label>
+                        </div>
                     ))}
                   </RadioGroup>
               </div>
@@ -218,6 +221,4 @@ export default function ProductPage() {
     );
 }
 
-    
-
-    
+  
