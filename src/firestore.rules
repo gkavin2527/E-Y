@@ -10,31 +10,56 @@ service cloud.firestore {
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
+    
+    function isAdmin() {
+      // Allow if the user's UID is in the admins collection
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
 
     match /users/{userId} {
-      allow read, update, delete: if isOwner(userId);
-      allow create: if isSignedIn() && request.resource.data.id == request.auth.uid;
-      allow list: if false; // Prevent listing all users
+      allow read, update: if isOwner(userId);
+      allow create: if isSignedIn(); // Allow any signed in user to create their own profile
+      allow delete: if isOwner(userId);
+      allow list: if isAdmin(); // Only admins can list all users
 
-      // Cart is now a subcollection of users
-      match /cart/{cartId} {
-        allow read, write: if isOwner(userId);
+      match /cart/{cartDoc} {
+          allow read, write: if isOwner(userId);
+      }
+
+      match /addresses/{addressId} {
+          allow read, list, create, update, delete: if isOwner(userId);
       }
     }
 
-    match /sections/{sectionId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
+    match /products/{productId} {
+      allow get, list: if true; // Everyone can view products
+      allow create, update, delete: if isAdmin(); // Only admins can manage products
 
-      match /categories/{categoryId} {
-        allow get, list: if true;
-        allow create, update, delete: if false;
-
-        match /products/{productId} {
-          allow get, list: if true;
-          allow create, update, delete: if false;
-        }
+      match /reviews/{reviewId} {
+        allow list, get: if true; // Everyone can read reviews
+        // Allow create if user is signed in and the review is for them
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        // Users cannot update or delete reviews from the client
+        allow update, delete: if false;
       }
+    }
+    
+    match /orders/{orderId} {
+      // Allow a signed-in user to create an order for themselves
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      // Allow a user to get their own order, or an admin to get any order
+      allow get: if (resource.data.userId == request.auth.uid) || isAdmin();
+      // Allow a user to list their own orders, or an admin to list all orders
+      allow list: if (isOwner(request.query.userId)) || isAdmin();
+      // No one can update or delete historical orders
+      allow update, delete: if false;
+    }
+    
+    match /admins/{userId} {
+        // Anyone can read the admins collection to check for existence
+        allow read: if true;
+        // But no one can write to it from the client-side
+        allow write: if false;
     }
   }
 }
