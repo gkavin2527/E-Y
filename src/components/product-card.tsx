@@ -5,6 +5,7 @@ import Image from 'next/image';
 import type { Product } from '@/lib/types';
 import { Button } from './ui/button';
 import { Plus } from 'lucide-react';
+import { Badge } from './ui/badge';
 
 interface ProductCardProps {
   product: Product;
@@ -12,12 +13,18 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const firstImage = product.images?.[0];
+  const isOnSale = product.originalPrice && product.originalPrice > product.price;
 
   return (
     <div className="group relative">
-      <Link href={`/products/${product.id}`}>
+      <Link href={`/shop/products/${product.id}`}>
         <div className="overflow-hidden rounded-lg">
           <div className="relative aspect-[3/4] bg-muted">
+            {isOnSale && (
+              <Badge variant="destructive" className="absolute top-2 left-2 z-10">
+                Sale
+              </Badge>
+            )}
             {firstImage ? (
               <Image
                 src={firstImage}
@@ -37,9 +44,18 @@ export function ProductCard({ product }: ProductCardProps) {
       <div className="mt-4 flex justify-between">
         <div>
           <h3 className="font-medium text-sm text-foreground truncate">
-             <Link href={`/products/${product.id}`}>{product.name}</Link>
+             <Link href={`/shop/products/${product.id}`}>{product.name}</Link>
           </h3>
-          <p className="font-semibold mt-1 text-foreground">₹{product.price.toFixed(2)}</p>
+          <div className="flex items-baseline gap-2 mt-1">
+            <p className={`font-semibold text-foreground ${isOnSale ? 'text-destructive' : ''}`}>
+              ₹{product.price.toFixed(2)}
+            </p>
+            {isOnSale && (
+              <p className="font-semibold text-sm text-muted-foreground line-through">
+                ₹{product.originalPrice?.toFixed(2)}
+              </p>
+            )}
+          </div>
         </div>
         <Button variant="outline" size="icon" className="shrink-0">
           <Plus />

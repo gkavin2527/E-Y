@@ -22,6 +22,7 @@ const productSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters.'),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
   price: z.coerce.number().min(0.01, 'Price must be positive.'),
+  originalPrice: z.coerce.number().optional(),
   gender: z.enum(['men', 'women']),
   category: z.string().min(2, 'Category is required.'),
   sizes: z.record(z.coerce.number().int().min(0, 'Stock must be a non-negative number.')),
@@ -107,6 +108,7 @@ export function ProductDialog({ isOpen, setIsOpen, product }: ProductDialogProps
       name: '',
       description: '',
       price: 0,
+      originalPrice: undefined,
       gender: 'women',
       category: '',
       sizes: defaultSizes,
@@ -126,6 +128,7 @@ export function ProductDialog({ isOpen, setIsOpen, product }: ProductDialogProps
             name: product.name,
             description: product.description,
             price: product.price,
+            originalPrice: product.originalPrice,
             gender: product.gender,
             category: product.category,
             sizes: { ...defaultSizes, ...product.sizes },
@@ -136,6 +139,7 @@ export function ProductDialog({ isOpen, setIsOpen, product }: ProductDialogProps
             name: '',
             description: '',
             price: 0,
+            originalPrice: undefined,
             gender: 'women',
             category: '',
             sizes: defaultSizes,
@@ -148,16 +152,23 @@ export function ProductDialog({ isOpen, setIsOpen, product }: ProductDialogProps
   const onSubmit = async (data: ProductFormValues) => {
     if (!firestore) return;
     setIsSaving(true);
+    
+    // Make sure originalPrice is either a number or null/undefined, not an empty string
+    const finalData = {
+        ...data,
+        originalPrice: data.originalPrice ? Number(data.originalPrice) : undefined,
+    };
+
     try {
       if (product) {
         // Update existing product
         const productRef = doc(firestore, 'products', product.id);
-        await setDoc(productRef, { ...data, rating: product.rating || 5 }, { merge: true });
+        await setDoc(productRef, { ...finalData, rating: product.rating || 5 }, { merge: true });
         toast({ title: 'Success', description: 'Product updated successfully.' });
       } else {
         // Create new product
         const productsCollection = collection(firestore, 'products');
-        await addDoc(productsCollection, { ...data, rating: 5 }); // Add default rating
+        await addDoc(productsCollection, { ...finalData, rating: 5 }); // Add default rating
         toast({ title: 'Success', description: 'Product created successfully.' });
       }
       setIsOpen(false);
@@ -205,9 +216,15 @@ export function ProductDialog({ isOpen, setIsOpen, product }: ProductDialogProps
                     <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} rows={5} /></FormControl><FormMessage /></FormItem>
                 )} />
                 
-                <FormField control={form.control} name="price" render={({ field }) => (
-                    <FormItem><FormLabel>Price</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="price" render={({ field }) => (
+                        <FormItem><FormLabel>Sale Price (₹)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="originalPrice" render={({ field }) => (
+                        <FormItem><FormLabel>Original Price (₹)</FormLabel><FormControl><Input type="number" step="0.01" {...field} placeholder="Optional" /></FormControl><FormDescription>Leave blank if not on sale.</FormDescription><FormMessage /></FormItem>
+                    )} />
+                </div>
+
 
                 <div className="grid grid-cols-2 gap-4">
                     <FormField control={form.control} name="gender" render={({ field }) => (

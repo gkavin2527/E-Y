@@ -16,7 +16,11 @@
         },
         "price": {
           "type": "number",
-          "description": "Price of the product."
+          "description": "Current price of the product. If originalPrice is set, this is the sale price."
+        },
+        "originalPrice": {
+          "type": "number",
+          "description": "The original price of the product before a discount."
         },
         "categoryId": {
           "type": "string",
@@ -32,10 +36,13 @@
             "XL": { "type": "number" }
           }
         },
-        "imageUrl": {
-          "type": "string",
-          "description": "URL of the product image.",
-          "format": "uri"
+        "images": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          },
+          "description": "URLs of the product images."
         },
         "description": {
           "type": "string",
@@ -44,6 +51,13 @@
         "rating": {
           "type": "number",
           "description": "Customer rating of the product."
+        },
+        "gender": {
+            "type": "string",
+            "enum": ["men", "women"]
+        },
+        "category": {
+            "type": "string"
         }
       },
       "required": [
@@ -52,9 +66,11 @@
         "price",
         "categoryId",
         "sizes",
-        "imageUrl",
+        "images",
         "description",
-        "rating"
+        "rating",
+        "gender",
+        "category"
       ]
     },
     "Category": {
@@ -124,11 +140,16 @@
         "lastName": {
           "type": "string",
           "description": "Last name of the user."
+        },
+        "role": {
+            "type": "string",
+            "enum": ["customer", "admin"]
         }
       },
       "required": [
         "id",
-        "email"
+        "email",
+        "role"
       ]
     },
     "CartItem": {

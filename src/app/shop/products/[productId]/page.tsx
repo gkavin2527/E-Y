@@ -110,6 +110,8 @@ export default function ProductPage() {
   }
   
   const totalStock = Object.values(product.sizes).reduce((sum, q) => sum + q, 0);
+  const isOnSale = product.originalPrice && product.originalPrice > product.price;
+
 
   const handleAddToCart = () => {
     if (!selectedSize) {
@@ -200,7 +202,12 @@ export default function ProductPage() {
 
             <div className="space-y-6">
                 <h1 className="text-3xl font-bold font-headline">{product.name}</h1>
-                <p className="text-2xl font-semibold">₹{product.price.toFixed(2)}</p>
+                <div className="flex items-baseline gap-4">
+                    <p className={`text-2xl font-semibold ${isOnSale ? 'text-destructive' : ''}`}>₹{product.price.toFixed(2)}</p>
+                    {isOnSale && (
+                        <p className="text-xl text-muted-foreground line-through">₹{product.originalPrice?.toFixed(2)}</p>
+                    )}
+                </div>
                 <ProductRating rating={product.rating} />
                 <p className="text-muted-foreground">{product.description}</p>
 
