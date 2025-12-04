@@ -156,6 +156,104 @@ export default function CheckoutPage() {
     return orderRef.id;
   }
 
+  const handleRazorpayPayment = async () => {
+    if (!user || items.length === 0 || !selectedAddressId) {
+        toast({ variant: 'destructive', title: "Missing Information", description: "Please select a shipping address and ensure your cart is not empty." });
+        return;
+    }
+
+    setIsProcessing(true);
+    toast({ title: "Processing Payment...", description: "Please wait." });
+    
+    // --- RAZORPAY INTEGRATION GUIDE: STEP 1 (CLIENT) ---
+    // In this function, you'll make two calls to your own server:
+    // 1. Create a Razorpay Order: Send the amount to your server to create a payment order with Razorpay.
+    // 2. Verify the Payment: After the user pays, send the payment details to your server to verify the signature.
+
+    try {
+        // --- 1. Create Order ---
+        // UNCOMMENT THE FOLLOWING BLOCK and create the API route `/api/razorpay` on your server.
+        /*
+        const orderResponse = await fetch('/api/razorpay', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: Math.round(totalWithDiscount * 100) }), // Amount in paisa
+        });
+
+        if (!orderResponse.ok) throw new Error('Failed to create Razorpay order.');
+        
+        const orderData = await orderResponse.json();
+        */
+        // --- MOCK ORDER DATA (REMOVE THIS WHEN YOU UNCOMMENT THE ABOVE BLOCK) ---
+        const orderData = { id: 'order_mock_' + Date.now(), amount: Math.round(totalWithDiscount * 100), currency: 'INR' };
+        // --------------------------------------------------------------------------
+
+        const selectedAddress = addresses?.find(a => a.id === selectedAddressId);
+
+        const options = {
+            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+            amount: orderData.amount,
+            currency: orderData.currency,
+            name: "E&Y Store",
+            description: "Order Payment",
+            order_id: orderData.id,
+            handler: async function (response: any) {
+                // --- 2. Verify Payment ---
+                // UNCOMMENT THE FOLLOWING BLOCK and create the API route `/api/verify-payment` on your server.
+                /*
+                const verificationResponse = await fetch('/api/verify-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_signature: response.razorpay_signature,
+                    }),
+                });
+
+                if (!verificationResponse.ok) throw new Error('Payment verification failed.');
+
+                const verificationResult = await verificationResponse.json();
+                if (!verificationResult.success) throw new Error('Invalid Razorpay signature.');
+                */
+               // --- MOCK VERIFICATION (REMOVE WHEN UNCOMMENTING) ---
+               const verificationResult = { success: true };
+               // ---------------------------------------------------
+                
+                if (verificationResult.success) {
+                    await saveOrderToFirestore();
+                    await clearCart();
+                    toast({ title: "Order Placed Successfully!", description: "Thank you for your purchase." });
+                    router.push('/account/orders');
+                } else {
+                    throw new Error('Payment verification failed.');
+                }
+            },
+            prefill: {
+                name: userProfile?.firstName + ' ' + userProfile?.lastName,
+                email: userProfile?.email,
+                contact: "",
+            },
+            notes: {
+                address: `${selectedAddress?.address}, ${selectedAddress?.city}, ${selectedAddress?.zipCode}`,
+            },
+            theme: {
+                color: "#FBBF24"
+            }
+        };
+
+        const rzp = new (window as any).Razorpay(options);
+        rzp.open();
+
+    } catch (error: any) {
+        console.error("Razorpay Error:", error);
+        toast({ variant: "destructive", title: "Payment Failed", description: error.message || "There was a problem processing your payment." });
+    } finally {
+        setIsProcessing(false);
+    }
+  };
+
+
   const handlePlaceOrder = async (data: PaymentFormValues) => {
     if (!user || !firestore || items.length === 0 || !selectedAddressId) {
         if (!selectedAddressId) {
@@ -176,6 +274,7 @@ export default function CheckoutPage() {
     }
 
     try {
+        // This part is now mainly for COD
         await saveOrderToFirestore();
         await clearCart();
         toast({ title: "Order Placed Successfully!", description: "Thank you for your purchase." });
@@ -203,6 +302,19 @@ export default function CheckoutPage() {
         </div>
     )
   }
+
+  const getButtonAction = () => {
+    switch (paymentMethod) {
+        case 'razorpay':
+            return handleRazorpayPayment;
+        case 'card':
+            return paymentForm.handleSubmit(handlePlaceOrder); // This needs to be adapted if card is not COD
+        case 'cod':
+        default:
+            return () => handlePlaceOrder({} as PaymentFormValues);
+    }
+  }
+
 
   return (
     <>
@@ -249,14 +361,20 @@ export default function CheckoutPage() {
                     <CardDescription>All transactions are secure and encrypted.</CardDescription>
                 </CardHeader>
                  <CardContent>
-                    <Tabs defaultValue="card" className="w-full" onValueChange={setPaymentMethod}>
-                        <TabsList className="grid w-full grid-cols-2">
+                    <Tabs defaultValue="razorpay" className="w-full" onValueChange={setPaymentMethod}>
+                        <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger value="razorpay">
+                                 <svg width="80" height="20" viewBox="0 0 80 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5"><path d="M79.0991 10.3704L73.916 0H68.3229L73.916 10.3704L68.3229 20H73.916L79.0991 10.3704Z" fill="#3B82F6"></path><path d="M37.8929 19.5303C34.708 19.5303 32.1932 17.5186 32.1932 13.917V0H37.5165V13.782C37.5165 15.0117 38.3032 15.6563 39.4665 15.6563C40.6298 15.6563 41.3592 14.9847 41.3592 13.782V0H46.6825V13.6737C46.6825 17.4645 44.2532 19.5303 40.8498 19.5303H37.8929Z" fill="#fff"></path><path d="M22.9519 19.2319C17.6559 19.2319 15.4484 15.8925 15.4484 11.2303C15.4484 6.51394 17.6559 3.22852 22.9519 3.22852C28.2479 3.22852 30.4554 6.51394 30.4554 11.2303C30.4554 15.8925 28.2479 19.2319 22.9519 19.2319ZM22.9248 6.07062C20.6632 6.07062 19.4274 8.05525 19.4274 11.2303C19.4274 14.3783 20.6632 16.39 22.9248 16.39C25.1864 16.39 26.4221 14.3783 26.4221 11.2303C26.4221 8.05525 25.1864 6.07062 22.9248 6.07062Z" fill="#fff"></path><path d="M53.8829 19.2319C48.5869 19.2319 46.3794 15.8925 46.3794 11.2303C46.3794 6.51394 48.5869 3.22852 53.8829 3.22852C59.1789 3.22852 61.3864 6.51394 61.3864 11.2303C61.3864 15.8925 59.1789 19.2319 53.8829 19.2319ZM53.8558 6.07062C51.5942 6.07062 50.3584 8.05525 50.3584 11.2303C50.3584 14.3783 51.5942 16.39 53.8558 16.39C56.1174 16.39 57.3532 14.3783 57.3532 11.2303C57.3532 8.05525 56.1174 6.07062 53.8558 6.07062Z" fill="#fff"></path><path d="M0 0.569336H5.40875V3.79786H8.60469V0.569336H14.0134V19.0969H8.60469V9.3374H5.40875V19.0969H0V0.569336Z" fill="#fff"></path></svg>
+                            </TabsTrigger>
                             <TabsTrigger value="card"><CreditCard className="h-4 w-4 mr-2" />Card</TabsTrigger>
                             <TabsTrigger value="cod"><Banknote className="h-4 w-4 mr-2" />COD</TabsTrigger>
                         </TabsList>
+                        <TabsContent value="razorpay" className="pt-6 text-center">
+                            <p className="text-muted-foreground">You will be redirected to Razorpay to complete your payment.</p>
+                        </TabsContent>
                         <TabsContent value="card" className="pt-6">
                             <Form {...paymentForm}>
-                                <form id="payment-form" onSubmit={paymentForm.handleSubmit(handlePlaceOrder)} className="space-y-4">
+                                <form id="payment-form" className="space-y-4">
                                      <FormField control={paymentForm.control} name="cardNumber" render={({ field }) => (
                                         <FormItem><FormLabel>Card Number</FormLabel><FormControl><Input placeholder="0000 0000 0000 0000" {...field} /></FormControl><FormMessage /></FormItem>
                                     )} />
@@ -279,7 +397,7 @@ export default function CheckoutPage() {
               </Card>
 
               <Button 
-                onClick={paymentMethod === 'card' ? paymentForm.handleSubmit(handlePlaceOrder) : () => handlePlaceOrder({} as PaymentFormValues)} 
+                onClick={getButtonAction()} 
                 className="w-full" 
                 size="lg" 
                 disabled={isProcessing}

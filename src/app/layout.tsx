@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Bot } from 'lucide-react';
 import Head from 'next/head';
+import Script from 'next/script';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -52,6 +53,7 @@ export default function RootLayout({
             </Link>
           </CartProvider>
         </FirebaseClientProvider>
+        <Script id="razorpay-checkout-js" src="https://checkout.razorpay.com/v1/checkout.js" />
       </body>
     </html>
   );
