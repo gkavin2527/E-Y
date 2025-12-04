@@ -86,11 +86,11 @@ export default function ProductPage() {
       collection(firestore, 'products'),
       where('category', '==', product.category),
       where('gender', '==', product.gender),
-      where('id', '!=', product.id),
+      where('__name__', '!=', product.id),
       limit(4)
-    );
+    )
   }, [firestore, product]);
-  
+
   const { data: relatedProducts, isLoading: areRelatedLoading } = useCollection<Product>(relatedProductsQuery);
 
   const { addItem } = useCart();
@@ -99,16 +99,6 @@ export default function ProductPage() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiDescription, setAiDescription] = useState('');
-  
-  const totalStock = useMemo(() => {
-    if (!product) return 0;
-    return Object.values(product.sizes).reduce((sum, q) => sum + q, 0);
-  }, [product]);
-  
-  const isOnSale = useMemo(() => {
-      if (!product) return false;
-      return typeof product.originalPrice === 'number' && product.originalPrice > product.price;
-  }, [product]);
 
   if (isProductLoading) {
     return <ProductPageSkeleton />;
@@ -117,6 +107,10 @@ export default function ProductPage() {
   if (!product) {
     return notFound();
   }
+  
+  const totalStock = Object.values(product.sizes).reduce((sum, q) => sum + q, 0);
+  const isOnSale = typeof product.originalPrice === 'number' && product.originalPrice > product.price;
+
 
   const handleAddToCart = () => {
     if (!selectedSize) {
@@ -174,13 +168,11 @@ export default function ProductPage() {
                     </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
-                 {product.gender && (
-                    <BreadcrumbItem>
-                        <BreadcrumbLink asChild>
-                            <Link href={`/shop/${product.gender}`}>{product.gender.charAt(0).toUpperCase() + product.gender.slice(1)}</Link>
-                        </BreadcrumbLink>
-                    </BreadcrumbItem>
-                )}
+                <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                        <Link href={`/shop/${product.gender}`}>{product.gender.charAt(0).toUpperCase() + product.gender.slice(1)}</Link>
+                    </BreadcrumbLink>
+                </BreadcrumbItem>
                 {product.category && (
                     <>
                         <BreadcrumbSeparator />
