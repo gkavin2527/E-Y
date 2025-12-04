@@ -1,5 +1,4 @@
 
-
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Product } from '@/lib/types';
@@ -64,5 +63,3 @@ export function ProductCard({ product }: ProductCardProps) {
     </div>
   );
 }
-
-    
