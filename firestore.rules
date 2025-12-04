@@ -49,8 +49,8 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       // Allow a user to get their own order, or an admin to get any order
       allow get: if (resource.data.userId == request.auth.uid) || isAdmin();
-      // Allow a user to list THEIR OWN orders, or an admin to list ALL orders
-      allow list: if (request.query.get('userId') == request.auth.uid) || isAdmin();
+      // Allow a user to list THEIR OWN orders (by filtering on userId), or an admin to list ALL orders.
+      allow list: if (request.query.where.left == "userId" && request.query.where.right == request.auth.uid) || isAdmin();
       // No one can update or delete historical orders
       allow update, delete: if false;
     }
