@@ -1,4 +1,5 @@
 
+
 export type Product = {
   id: string;
   name: string;
@@ -6,6 +7,7 @@ export type Product = {
   price: number;
   originalPrice?: number;
   rating: number;
+  reviewCount?: number;
   images: string[];
   category?: string;
   gender: 'men' | 'women';
@@ -72,3 +74,13 @@ export type UserProfile = {
     role: 'customer' | 'admin';
     defaultAddressId?: string;
 };
+
+export type Review = {
+    id: string;
+    userId: string;
+    productId: string;
+    userName: string;
+    rating: number;
+    comment: string;
+    createdAt: { seconds: number; nanoseconds: number; };
+}

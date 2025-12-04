@@ -34,6 +34,14 @@ service cloud.firestore {
     match /products/{productId} {
       allow get, list: if true; // Everyone can view products
       allow create, update, delete: if isAdmin(); // Only admins can manage products
+
+      match /reviews/{reviewId} {
+        allow list, get: if true; // Everyone can read reviews
+        // Allow create if user is signed in and the review is for them
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        // Users cannot update or delete reviews from the client
+        allow update, delete: if false;
+      }
     }
     
     match /orders/{orderId} {

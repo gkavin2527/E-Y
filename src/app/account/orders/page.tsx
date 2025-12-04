@@ -2,8 +2,8 @@
 'use client';
 
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
-import type { Order } from '@/lib/types';
+import { collection, query, where, doc, getDocs, writeBatch, serverTimestamp, runTransaction } from 'firebase/firestore';
+import type { Order, OrderItem, Review, Product } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -11,8 +11,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
+import { ReviewDialog } from '@/components/product/review-dialog';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
-function OrderItemCard({ item }: { item: Order['items'][0] }) {
+function OrderItemCard({ item, onReview }: { item: Order['items'][0], onReview: (item: OrderItem) => void }) {
     const productImage = item.image;
     return (
         <div className="flex items-center gap-4 py-2">
@@ -23,7 +26,10 @@ function OrderItemCard({ item }: { item: Order['items'][0] }) {
                 <p className="font-medium text-sm">{item.name}</p>
                 <p className="text-xs text-muted-foreground">Size: {item.size} &times; {item.quantity}</p>
             </div>
-            <p className="font-medium text-sm">₹{(item.price * item.quantity).toFixed(2)}</p>
+            <div className="flex flex-col items-end gap-2">
+                <p className="font-medium text-sm">₹{(item.price * item.quantity).toFixed(2)}</p>
+                <Button variant="outline" size="sm" onClick={() => onReview(item)}>Write a Review</Button>
+            </div>
         </div>
     )
 }
@@ -32,6 +38,10 @@ function OrderItemCard({ item }: { item: Order['items'][0] }) {
 export default function OrdersPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+  const [selectedItemForReview, setSelectedItemForReview] = useState<OrderItem | null>(null);
 
   const ordersQuery = useMemoFirebase(
     () => (firestore && user ? query(collection(firestore, 'orders'), where('userId', '==', user.uid)) : null),
@@ -41,6 +51,59 @@ export default function OrdersPage() {
   const { data: orders, isLoading: areOrdersLoading } = useCollection<Order>(ordersQuery);
 
   const isLoading = isUserLoading || areOrdersLoading;
+
+  const handleOpenReviewDialog = (item: OrderItem) => {
+    setSelectedItemForReview(item);
+    setIsReviewDialogOpen(true);
+  }
+
+  const handleReviewSubmit = async (rating: number, comment: string) => {
+    if (!firestore || !user || !selectedItemForReview) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not submit review. Please try again.' });
+        return false;
+    }
+    try {
+        const productId = selectedItemForReview.productId;
+        const productRef = doc(firestore, 'products', productId);
+        const reviewsCollectionRef = collection(productRef, 'reviews');
+        
+        await runTransaction(firestore, async (transaction) => {
+            // 1. Create the new review
+            const newReviewRef = doc(reviewsCollectionRef);
+            const newReview: Omit<Review, 'id'> = {
+                userId: user.uid,
+                productId: productId,
+                userName: user.displayName || user.email || 'Anonymous',
+                rating,
+                comment,
+                createdAt: serverTimestamp() as any,
+            };
+            transaction.set(newReviewRef, newReview);
+
+            // 2. Recalculate the product's average rating and review count
+            const reviewsSnapshot = await getDocs(query(reviewsCollectionRef));
+            const reviews = reviewsSnapshot.docs.map(d => d.data() as Review);
+            reviews.push(newReview as Review); // Add the new review to the list for calculation
+
+            const reviewCount = reviews.length;
+            const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+            const averageRating = totalRating / reviewCount;
+
+            // 3. Update the product document
+            transaction.update(productRef, {
+                rating: Number(averageRating.toFixed(2)),
+                reviewCount: reviewCount,
+            });
+        });
+
+        toast({ title: 'Review Submitted!', description: 'Thank you for your feedback.' });
+        return true;
+    } catch (error) {
+        console.error("Failed to submit review:", error);
+        toast({ variant: 'destructive', title: 'Submission Failed', description: 'An error occurred while submitting your review.' });
+        return false;
+    }
+  }
 
   if (isLoading) {
     return (
@@ -59,6 +122,7 @@ export default function OrdersPage() {
   }
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle>My Orders</CardTitle>
@@ -98,9 +162,9 @@ export default function OrdersPage() {
                         </AccordionTrigger>
                         <AccordionContent className="p-4 pt-0">
                              <Separator className="mb-4" />
-                            <div className="space-y-2">
+                            <div className="space-y-2 divide-y">
                                 {order.items.map((item) => (
-                                    <OrderItemCard key={item.productId + item.size} item={item} />
+                                    <OrderItemCard key={item.productId + item.size} item={item} onReview={handleOpenReviewDialog} />
                                 ))}
                             </div>
                         </AccordionContent>
@@ -111,5 +175,15 @@ export default function OrdersPage() {
         )}
       </CardContent>
     </Card>
+    {selectedItemForReview && (
+        <ReviewDialog 
+            isOpen={isReviewDialogOpen}
+            setIsOpen={setIsReviewDialogOpen}
+            productName={selectedItemForReview.name}
+            productImage={selectedItemForReview.image}
+            onSubmit={handleReviewSubmit}
+        />
+    )}
+    </>
   );
 }

@@ -4,9 +4,9 @@
 import { useParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
-import { doc } from 'firebase/firestore';
-import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import type { Product } from '@/lib/types';
+import { doc, collection, query, orderBy } from 'firebase/firestore';
+import { useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
+import type { Product, Review } from '@/lib/types';
 import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import Link from 'next/link';
 import { Star } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+
+function StarRating({ rating, size = 'md' }: { rating: number, size?: 'sm' | 'md' | 'lg' }) {
+    const starSize = { sm: 'h-4 w-4', md: 'h-5 w-5', lg: 'h-6 w-6' }[size];
+    return (
+        <div className="flex items-center">
+            {[...Array(5)].map((_, i) => (
+                <Star key={i} className={`${starSize} ${i < Math.round(rating) ? 'text-primary fill-primary' : 'text-muted-foreground/50'}`} />
+            ))}
+        </div>
+    );
+}
+
 
 function ProductPageSkeleton() {
     return (
@@ -60,8 +73,14 @@ export default function ProductPage() {
       () => (firestore && productId ? doc(firestore, 'products', productId) : null),
       [firestore, productId]
     );
+
+    const reviewsQuery = useMemoFirebase(
+        () => (productDocRef ? query(collection(productDocRef, 'reviews'), orderBy('createdAt', 'desc')) : null),
+        [productDocRef]
+    );
   
-    const { data: product, isLoading, error } = useDoc<Product>(productDocRef);
+    const { data: product, isLoading: isProductLoading } = useDoc<Product>(productDocRef);
+    const { data: reviews, isLoading: areReviewsLoading } = useCollection<Review>(reviewsQuery);
   
     const [selectedSize, setSelectedSize] = useState<'S' | 'M' | 'L' | 'XL' | null>(null);
     const [mainImage, setMainImage] = useState<string | null>(null);
@@ -88,6 +107,8 @@ export default function ProductPage() {
         description: `${product.name} (${selectedSize}) has been added to your cart.`,
       });
     };
+
+    const isLoading = isProductLoading || areReviewsLoading;
 
     if (isLoading) {
       return <ProductPageSkeleton />;
@@ -165,12 +186,8 @@ export default function ProductPage() {
           <div className="flex flex-col">
             <h1 className="text-3xl font-bold font-headline">{product.name}</h1>
             <div className="mt-2 flex items-center gap-2">
-                <div className="flex items-center">
-                    {[...Array(5)].map((_, i) => (
-                        <Star key={i} className={`h-5 w-5 ${i < product.rating ? 'text-primary fill-primary' : 'text-muted-foreground'}`} />
-                    ))}
-                </div>
-                <span className="text-muted-foreground text-sm">({product.rating.toFixed(1)})</span>
+                <StarRating rating={product.rating} />
+                <span className="text-muted-foreground text-sm">({product.rating.toFixed(1)} from {product.reviewCount || 0} reviews)</span>
             </div>
             <p className="text-3xl font-semibold my-4">
               ₹{product.price.toFixed(2)}
@@ -217,8 +234,40 @@ export default function ProductPage() {
             </div>
           </div>
         </div>
+
+        {/* Reviews Section */}
+        <div className="mt-16">
+            <h2 className="text-2xl font-bold font-headline mb-6">Customer Reviews</h2>
+            {reviews && reviews.length > 0 ? (
+                <div className="space-y-6">
+                    {reviews.map(review => (
+                        <div key={review.id} className="flex gap-4 border-b pb-6">
+                            <Avatar>
+                                <AvatarFallback>{review.userName.charAt(0).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="font-semibold">{review.userName}</h3>
+                                    <span className="text-xs text-muted-foreground">
+                                        {new Date(review.createdAt.seconds * 1000).toLocaleDateString()}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <StarRating rating={review.rating} size="sm" />
+                                </div>
+                                <p className="mt-3 text-sm text-muted-foreground">{review.comment}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                    <h3 className="text-lg font-semibold">No reviews yet</h3>
+                    <p className="text-muted-foreground mt-1">Be the first to review this product!</p>
+                </div>
+            )}
+        </div>
+
       </div>
     );
 }
-
-  

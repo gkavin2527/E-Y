@@ -1,4 +1,3 @@
-
 'use client';
 
 import { MainNav } from './main-nav';
@@ -36,42 +35,56 @@ import {
 import { Input } from '../ui/input';
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
-import { Search, ShoppingBag, User as UserIcon } from 'lucide-react';
+import { Search, ShoppingBag, User as UserIcon, LogOut, Package, UserCircle, Shield } from 'lucide-react';
 
 
 const SearchDialog = () => {
   const router = useRouter();
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const searchQuery = formData.get('q') as string;
-    router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
-    setOpen(false); // Close the dialog after search
+    if (query.trim()) {
+      router.push(`/search?q=${encodeURIComponent(query)}`);
+      setOpen(false);
+      setQuery('');
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Search">
-          <Search className="h-5 w-5" />
+        <Button variant="ghost" size="icon" aria-label="Search" className="relative group">
+          <Search className="h-5 w-5 transition-transform group-hover:scale-110" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Search for products</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">Search Products</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="flex items-center space-x-2">
-            <Input name="q" placeholder="e.g. 'Classic Crewneck Tee'" autoFocus />
-            <Button type="submit">Search</Button>
+        <form onSubmit={handleSubmit} className="mt-4">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input 
+                name="q" 
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search for products..." 
+                className="pl-10"
+                autoFocus 
+              />
+            </div>
+            <Button type="submit" size="lg" disabled={!query.trim()}>
+              Search
+            </Button>
           </div>
         </form>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};
 
 const UserButton = () => {
     const { user, isUserLoading } = useUser();
@@ -104,6 +117,9 @@ const UserButton = () => {
     };
   
     const getInitials = () => {
+      if (user?.displayName) {
+        return user.displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+      }
       if (user?.email) {
         return user.email[0].toUpperCase();
       }
@@ -111,53 +127,77 @@ const UserButton = () => {
     };
 
     if (isUserLoading) {
-        return <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />;
+        return (
+          <div className="h-9 w-9 animate-pulse rounded-full bg-muted border-2 border-border" />
+        );
     }
 
     if (!user) {
         return (
-            <Button variant="ghost" size="icon" aria-label="Login" asChild>
+            <Button variant="ghost" size="icon" aria-label="Login" className="group" asChild>
                 <Link href="/login">
-                <UserIcon className="h-5 w-5" />
+                  <UserIcon className="h-5 w-5 transition-transform group-hover:scale-110" />
                 </Link>
             </Button>
-        )
+        );
     }
 
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="User Profile">
-                    <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? "user photo"} />
-                    <AvatarFallback>{getInitials()}</AvatarFallback>
-                </Avatar>
+                <Button variant="ghost" size="icon" aria-label="User Profile" className="relative group">
+                    <Avatar className="h-9 w-9 border-2 border-transparent transition-all group-hover:border-primary">
+                      <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? "user photo"} />
+                      <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
+                        {getInitials()}
+                      </AvatarFallback>
+                    </Avatar>
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {user.displayName || 'User'}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {adminDoc && (
-                  <DropdownMenuItem asChild>
-                    <Link href="/admin" className='flex items-center gap-2'>
-                      <span>Admin Panel</span>
-                    </Link>
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin" className='flex items-center gap-2 cursor-pointer'>
+                        <Shield className="h-4 w-4" />
+                        <span>Admin Panel</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
                 )}
                 <DropdownMenuItem asChild>
-                    <Link href="/account/profile">Profile</Link>
+                    <Link href="/account/profile" className='flex items-center gap-2 cursor-pointer'>
+                      <UserCircle className="h-4 w-4" />
+                      <span>Profile</span>
+                    </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                    <Link href="/account/orders">Orders</Link>
+                    <Link href="/account/orders" className='flex items-center gap-2 cursor-pointer'>
+                      <Package className="h-4 w-4" />
+                      <span>Orders</span>
+                    </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2">
-                <span>Logout</span>
+                <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive">
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
-    )
-}
+    );
+};
 
 function ClientOnly({ children }: { children: React.ReactNode }) {
     const [hasMounted, setHasMounted] = useState(false);
@@ -178,41 +218,52 @@ export function SiteHeader() {
   const { totalItems } = useCart();
   
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
-        <div className="flex gap-6 md:gap-10">
-            <Link href="/">
-                <span className="text-2xl font-bold font-headline tracking-wide">E&Y</span>
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className="container mx-auto px-4 md:px-6">
+        <div className="flex h-16 items-center">
+          {/* Left Section - Logo */}
+          <div className="flex w-1/4 items-center">
+            <Link href="/" className="group flex items-center gap-2 shrink-0">
+                <div className="relative flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-primary/90 to-primary/80 shadow-md transition-transform group-hover:scale-105">
+                  <span className="text-xl font-black text-primary-foreground">E</span>
+                  <div className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-yellow-400 shadow-sm animate-pulse" />
+                </div>
+                <span className="hidden sm:inline-block text-2xl font-bold font-headline tracking-wide bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                  E&Y
+                </span>
             </Link>
+          </div>
+
+          {/* Center Section - Navigation */}
+          <div className="flex flex-1 justify-center">
             <MainNav />
-        </div>
-        <div className="flex flex-1 items-center justify-end space-x-1">
-            
-                <SearchDialog />
-                <UserButton />
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" aria-label="Shopping Cart" className="relative">
-                      <ShoppingBag className="h-5 w-5" />
-                      {totalItems > 0 && (
-                        <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-primary-foreground bg-primary rounded-full transform translate-x-1/2 -translate-y-1/2">
-                          {totalItems}
-                        </span>
-                      )}
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent>
-                    <SheetHeader>
-                      <SheetTitle>Shopping Cart</SheetTitle>
-                    </SheetHeader>
-                    <CartSheet />
-                  </SheetContent>
-                </Sheet>
-            
+          </div>
+
+          {/* Right Section - Actions */}
+          <div className="flex w-1/4 items-center justify-end gap-1">
+            <SearchDialog />
+            <UserButton />
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Shopping Cart" className="relative group">
+                  <ShoppingBag className="h-5 w-5 transition-transform group-hover:scale-110" />
+                  {totalItems > 0 && (
+                    <span className="absolute -top-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground shadow-lg ring-2 ring-background animate-in zoom-in-50">
+                      {totalItems > 9 ? '9+' : totalItems}
+                    </span>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="w-full sm:max-w-lg">
+                <SheetHeader>
+                  <SheetTitle className="text-xl font-semibold">Shopping Cart</SheetTitle>
+                </SheetHeader>
+                <CartSheet />
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
     </header>
   );
 }
-
-

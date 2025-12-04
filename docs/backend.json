@@ -53,6 +53,10 @@
           "type": "number",
           "description": "Customer rating of the product."
         },
+        "reviewCount": {
+          "type": "number",
+          "description": "The total number of reviews for the product."
+        },
         "gender": {
             "type": "string",
             "enum": ["men", "women"]
@@ -70,6 +74,7 @@
         "images",
         "description",
         "rating",
+        "reviewCount",
         "gender"
       ]
     },
@@ -307,6 +312,20 @@
         "items",
         "shippingAddress"
       ]
+    },
+    "Review": {
+        "title": "Review",
+        "type": "object",
+        "description": "Represents a customer review for a product.",
+        "properties": {
+            "userId": { "type": "string", "description": "The ID of the user who wrote the review." },
+            "productId": { "type": "string", "description": "The ID of the product being reviewed." },
+            "userName": { "type": "string", "description": "The name of the user who wrote the review." },
+            "rating": { "type": "number", "description": "The star rating given by the user (1-5)." },
+            "comment": { "type": "string", "description": "The review text." },
+            "createdAt": { "type": "string", "format": "date-time", "description": "The timestamp when the review was submitted." }
+        },
+        "required": ["userId", "productId", "userName", "rating", "createdAt"]
     }
   },
   "auth": {
@@ -368,6 +387,18 @@
             }
           ]
         }
+      },
+      {
+          "path": "products/{productId}/reviews/{reviewId}",
+          "definition": {
+              "entityName": "Review",
+              "schema": { "$ref": "#/entities/Review" },
+              "description": "A subcollection of reviews for a specific product.",
+              "params": [
+                  { "name": "productId", "description": "The product's ID." },
+                  { "name": "reviewId", "description": "The review's unique ID." }
+              ]
+          }
       },
       {
         "path": "users/{userId}",
