@@ -39,9 +39,13 @@ const chatFlow = ai.defineFlow(
     outputSchema: ChatOutputSchema,
   },
   async ({ history }) => {
+    // For chat, the `prompt` is the latest message, and `history` is the preceding conversation.
+    const prompt = history.pop()?.content || '';
+    
     const response = await ai.generate({
       model: ai.model,
-      prompt: history,
+      prompt: prompt,
+      history: history,
     });
 
     const choice = response.choices[0];
