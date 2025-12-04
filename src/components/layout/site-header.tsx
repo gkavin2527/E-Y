@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from '../ui/input';
 import { useRouter } from 'next/navigation';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, ShoppingBag, User as UserIcon } from 'lucide-react';
 
 
@@ -159,6 +159,21 @@ const UserButton = () => {
     )
 }
 
+function ClientOnly({ children }: { children: React.ReactNode }) {
+    const [hasMounted, setHasMounted] = useState(false);
+  
+    useEffect(() => {
+      setHasMounted(true);
+    }, []);
+  
+    if (!hasMounted) {
+      return null;
+    }
+  
+    return <>{children}</>;
+}
+
+
 export function SiteHeader() {
   const { totalItems } = useCart();
   
@@ -172,26 +187,28 @@ export function SiteHeader() {
             <MainNav />
         </div>
         <div className="flex flex-1 items-center justify-end space-x-1">
-            <SearchDialog />
-            <UserButton />
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Shopping Cart" className="relative">
-                  <ShoppingBag className="h-5 w-5" />
-                  {totalItems > 0 && (
-                    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-primary-foreground bg-primary rounded-full transform translate-x-1/2 -translate-y-1/2">
-                      {totalItems}
-                    </span>
-                  )}
-                </Button>
-              </SheetTrigger>
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle>Shopping Cart</SheetTitle>
-                </SheetHeader>
-                <CartSheet />
-              </SheetContent>
-            </Sheet>
+            <ClientOnly>
+                <SearchDialog />
+                <UserButton />
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon" aria-label="Shopping Cart" className="relative">
+                      <ShoppingBag className="h-5 w-5" />
+                      {totalItems > 0 && (
+                        <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-primary-foreground bg-primary rounded-full transform translate-x-1/2 -translate-y-1/2">
+                          {totalItems}
+                        </span>
+                      )}
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent>
+                    <SheetHeader>
+                      <SheetTitle>Shopping Cart</SheetTitle>
+                    </SheetHeader>
+                    <CartSheet />
+                  </SheetContent>
+                </Sheet>
+            </ClientOnly>
         </div>
       </div>
     </header>
