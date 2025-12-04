@@ -14,17 +14,16 @@ import { cn } from '@/lib/utils';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import Link from 'next/link';
-import { CheckCircle, Home, Plus, TicketPercent, CreditCard, Banknote, Landmark, Wallet } from 'lucide-react';
+import { CheckCircle, Home, Plus, TicketPercent, CreditCard, Banknote } from 'lucide-react';
 import type { UserProfile, Address, Order } from '@/lib/types';
 import { AddressDialog } from '@/components/account/address-dialog';
-
 
 const paymentSchema = z.object({
     cardNumber: z.string().regex(/^\d{16}$/, 'Card number must be 16 digits.').optional().or(z.literal('')),
@@ -41,6 +40,9 @@ const validCoupons: Record<string, { description: string, type: 'percentage' | '
     'SAVE10': { description: "Get 10% off on your order", type: 'percentage', value: 10 },
     'FLAT50': { description: "Get flat ₹50 off", type: 'flat', value: 50 },
 };
+
+
+
 
 function CheckoutSkeleton() {
     return (
@@ -72,7 +74,7 @@ export default function CheckoutPage() {
   const [discount, setDiscount] = useState(0);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('razorpay');
+  const [paymentMethod, setPaymentMethod] = useState('card');
 
 
   const userDocRef = useMemoFirebase(
@@ -139,129 +141,19 @@ export default function CheckoutPage() {
   const saveOrderToFirestore = async () => {
     if (!user || !firestore) throw new Error("User or Firestore not available");
 
+    const selectedAddress = addresses?.find(a => a.id === selectedAddressId);
+    if (!selectedAddress) throw new Error("No address selected");
+
     const orderData: Omit<Order, 'id'> = {
         userId: user.uid,
-        createdAt: serverTimestamp() as any, // Let server generate timestamp
+        createdAt: serverTimestamp() as any,
         items: items,
         total: totalWithDiscount,
-        shippingAddress: addresses?.find(a => a.id === selectedAddressId)!,
+        shippingAddress: selectedAddress,
     }
 
     const orderRef = await addDoc(collection(firestore, 'orders'), orderData);
     return orderRef.id;
-  }
-
-  const handleRazorpayPayment = async () => {
-    if (!user || !userProfile) return;
-    
-    // STEP 1: Create an Order on Your Server
-    // ------------------------------------------
-    // You need an API endpoint on your backend (e.g., a Next.js API route or a Cloud Function)
-    // that creates an order with Razorpay and returns the order_id.
-    //
-    // Example Server-Side Code (e.g., in `pages/api/razorpay.js`):
-    //
-    // const razorpay = new Razorpay({ key_id: 'YOUR_KEY_ID', key_secret: 'YOUR_KEY_SECRET' });
-    // const options = {
-    //   amount: amountInPaisa, // amount in the smallest currency unit
-    //   currency: "INR",
-    //   receipt: "receipt_order_74394"
-    // };
-    // const order = await razorpay.orders.create(options);
-    // res.status(200).json(order);
-
-    let serverOrderID;
-    try {
-        // In a real app, you would fetch this from your API
-        // const response = await fetch('/api/razorpay', {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify({ amount: totalWithDiscount * 100 }) // amount in paisa
-        // });
-        // const order = await response.json();
-        // serverOrderID = order.id;
-
-        // For this prototype, we'll use a placeholder.
-        serverOrderID = 'order_test_' + Date.now();
-        if (!serverOrderID) {
-            throw new Error("Failed to create Razorpay order.");
-        }
-
-    } catch (error) {
-        console.error("Razorpay order creation failed:", error);
-        toast({ variant: "destructive", title: "Payment Failed", description: "Could not connect to payment gateway." });
-        setIsProcessing(false);
-        return;
-    }
-
-
-    // STEP 2: Open Razorpay Checkout
-    // ---------------------------------
-    const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, // Use environment variable for your key
-        amount: (totalWithDiscount * 100).toString(),
-        currency: "INR",
-        name: "E&Y Store",
-        description: "Test Transaction",
-        image: "https://example.com/your_logo.jpg",
-        order_id: serverOrderID,
-        handler: async function (response: any) {
-            // STEP 3: Handle the Payment Success Callback
-            // --------------------------------------------
-            // This function is called when payment is successful.
-            // You now need to verify the payment signature on your server.
-            
-            // In a real app, you would send this data to a verification endpoint.
-            // const verificationResponse = await fetch('/api/verify-payment', {
-            //   method: 'POST',
-            //   headers: { 'Content-Type': 'application/json' },
-            //   body: JSON.stringify({
-            //     razorpay_order_id: response.razorpay_order_id,
-            //     razorpay_payment_id: response.razorpay_payment_id,
-            //     razorpay_signature: response.razorpay_signature
-            //   })
-            // });
-            // const result = await verificationResponse.json();
-            
-            // For this prototype, we will assume verification is successful.
-            const isSignatureVerified = true; // Replace with actual server verification
-
-            if (isSignatureVerified) {
-                // STEP 4: Save the order to Firestore and clear the cart
-                try {
-                    await saveOrderToFirestore();
-                    await clearCart();
-                    toast({ title: "Order Placed Successfully!", description: "Thank you for your purchase." });
-                    router.push('/account/orders');
-                } catch (dbError) {
-                    toast({ variant: "destructive", title: "Order Failed", description: "Your payment was successful, but we failed to save your order. Please contact support." });
-                }
-            } else {
-                toast({ variant: "destructive", title: "Payment Failed", description: "Payment verification failed. Please try again." });
-            }
-            setIsProcessing(false);
-        },
-        prefill: {
-            name: `${userProfile.firstName} ${userProfile.lastName}`,
-            email: userProfile.email,
-            contact: "9999999999" // Optional
-        },
-        notes: {
-            address: "Razorpay Corporate Office"
-        },
-        theme: {
-            color: "#EAB308" // Corresponds to primary yellow color
-        }
-    };
-    
-    // @ts-ignore
-    const rzp = new window.Razorpay(options);
-    rzp.on('payment.failed', function (response: any){
-        console.error("Razorpay Error:", response.error);
-        toast({ variant: "destructive", title: "Payment Failed", description: response.error.description });
-        setIsProcessing(false);
-    });
-    rzp.open();
   }
 
   const handlePlaceOrder = async (data: PaymentFormValues) => {
@@ -275,21 +167,14 @@ export default function CheckoutPage() {
     setIsProcessing(true);
     toast({ title: "Processing Order...", description: "Please wait while we finalize your order." });
 
-    if (paymentMethod === 'razorpay') {
-        await handleRazorpayPayment();
-        return; // handleRazorpayPayment will handle success/failure and loading state
-    }
-
     if (paymentMethod === 'card') {
         if (!paymentForm.formState.isValid) {
             toast({ variant: 'destructive', title: "Invalid Card Details", description: "Please check your card information and try again." });
             setIsProcessing(false);
             return;
         }
-        // Simulate card payment
     }
 
-    // Handle non-Razorpay payments (like COD or simulated card)
     try {
         await saveOrderToFirestore();
         await clearCart();
@@ -364,15 +249,11 @@ export default function CheckoutPage() {
                     <CardDescription>All transactions are secure and encrypted.</CardDescription>
                 </CardHeader>
                  <CardContent>
-                    <Tabs defaultValue="razorpay" className="w-full" onValueChange={setPaymentMethod}>
-                        <TabsList className="grid w-full grid-cols-4">
-                            <TabsTrigger value="razorpay">Razorpay</TabsTrigger>
-                            <TabsTrigger value="card"><CreditCard className="mr-2" />Card</TabsTrigger>
-                            <TabsTrigger value="cod"><Banknote className="mr-2" />COD</TabsTrigger>
+                    <Tabs defaultValue="card" className="w-full" onValueChange={setPaymentMethod}>
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="card"><CreditCard className="h-4 w-4 mr-2" />Card</TabsTrigger>
+                            <TabsTrigger value="cod"><Banknote className="h-4 w-4 mr-2" />COD</TabsTrigger>
                         </TabsList>
-                        <TabsContent value="razorpay" className="pt-6 text-center">
-                            <p className="text-muted-foreground">You will be redirected to Razorpay to complete your payment.</p>
-                        </TabsContent>
                         <TabsContent value="card" className="pt-6">
                             <Form {...paymentForm}>
                                 <form id="payment-form" onSubmit={paymentForm.handleSubmit(handlePlaceOrder)} className="space-y-4">
@@ -397,7 +278,12 @@ export default function CheckoutPage() {
                  </CardContent>
               </Card>
 
-              <Button form="payment-form" type="submit" className="w-full" size="lg" disabled={isProcessing}>
+              <Button 
+                onClick={paymentMethod === 'card' ? paymentForm.handleSubmit(handlePlaceOrder) : () => handlePlaceOrder({} as PaymentFormValues)} 
+                className="w-full" 
+                size="lg" 
+                disabled={isProcessing}
+              >
                 {isProcessing ? 'Processing...' : `Place Order - ₹${totalWithDiscount.toFixed(2)}`}
               </Button>
         </div>
