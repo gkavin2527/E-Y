@@ -1,18 +1,16 @@
 
 'use client';
 
-import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ProductCard } from '@/components/product-card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, limit, where } from 'firebase/firestore';
-import type { Product, Order, OrderItem } from '@/lib/types';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, limit } from 'firebase/firestore';
+import type { Product } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 
 function NewArrivalsSkeleton() {
   return (
@@ -27,76 +25,6 @@ function NewArrivalsSkeleton() {
       </div>
   )
 }
-
-function PastPurchases() {
-  const { user } = useUser();
-  const firestore = useFirestore();
-
-  const userOrdersQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'orders'), where('userId', '==', user.uid));
-  }, [firestore, user]);
-
-  const { data: orders, isLoading: areOrdersLoading } = useCollection<Order>(userOrdersQuery);
-
-  const purchasedProductIds = useMemo(() => {
-    if (!orders) return [];
-    const productIds = new Set<string>();
-    orders.forEach(order => {
-      order.items.forEach((item: OrderItem) => {
-        productIds.add(item.productId);
-      });
-    });
-    return Array.from(productIds);
-  }, [orders]);
-
-  const productsQuery = useMemoFirebase(() => {
-    if (!firestore || purchasedProductIds.length === 0) return null;
-    // Firestore 'in' queries are limited to 30 items. For a real app, this might need pagination.
-    const queryIds = purchasedProductIds.length > 30 ? purchasedProductIds.slice(0, 30) : purchasedProductIds;
-    if (queryIds.length === 0) return null;
-    return query(collection(firestore, 'products'), where('id', 'in', queryIds));
-  }, [firestore, purchasedProductIds]);
-
-  const { data: products, isLoading: areProductsLoading } = useCollection<Product>(productsQuery);
-
-  const isLoading = areOrdersLoading || areProductsLoading;
-
-  if (!user || (!isLoading && (!products || products.length === 0))) {
-    return null;
-  }
-
-  return (
-    <section className="container mx-auto px-4">
-      <h2 className="text-3xl font-headline font-bold text-center">Your Past Purchases</h2>
-        <div className="mt-8">
-          {isLoading && <NewArrivalsSkeleton />}
-          {!isLoading && products && (
-             <Carousel
-                opts={{
-                  align: "start",
-                  loop: true,
-                }}
-                className="w-full"
-              >
-                <CarouselContent>
-                  {products.map((product) => (
-                    <CarouselItem key={product.id} className="md:basis-1/2 lg:basis-1/4">
-                       <div className="p-1">
-                          <ProductCard product={product} />
-                        </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious />
-                <CarouselNext />
-              </Carousel>
-          )}
-        </div>
-    </section>
-  );
-}
-
 
 export default function Home() {
   const heroImage = PlaceHolderImages.find(p => p.id === 'hero-1');
@@ -135,8 +63,6 @@ export default function Home() {
           </Button>
         </div>
       </section>
-
-      <PastPurchases />
 
       <section className="container mx-auto px-4">
         <h2 className="text-3xl font-headline font-bold text-center">Shop Collections</h2>

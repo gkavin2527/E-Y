@@ -55,9 +55,8 @@ service cloud.firestore {
       // User can read their own orders; admin can read any
       allow get: if (resource.data.userId == request.auth.uid) || isAdmin();
 
-      // Admins can list all orders.
-      // Users can list orders ONLY if they are querying for their own orders.
-      allow list: if isAdmin() || request.query.where.userId == request.auth.uid;
+      // Admins can list all orders. Users cannot.
+      allow list: if isAdmin();
 
       allow update, delete: if false;
     }
