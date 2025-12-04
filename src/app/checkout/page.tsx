@@ -40,6 +40,12 @@ const checkoutSchema = shippingSchema.merge(paymentSchema);
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
 
+// Mock coupon data
+const validCoupons: Record<string, { type: 'percentage' | 'flat'; value: number }> = {
+    'SAVE10': { type: 'percentage', value: 10 },
+    'FLAT50': { type: 'flat', value: 50 },
+};
+
 export default function CheckoutPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -47,6 +53,9 @@ export default function CheckoutPage() {
   const { items, totalPrice, totalItems, clearCart } = useCart();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
+  const [discount, setDiscount] = useState(0);
+
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -75,8 +84,34 @@ export default function CheckoutPage() {
 
   
   const shippingCost = 5.00;
-  const totalWithShipping = totalPrice + shippingCost;
+  const subtotalWithShipping = totalPrice + shippingCost;
+  const totalWithDiscount = subtotalWithShipping - discount;
   
+  const handleApplyCoupon = () => {
+    const coupon = validCoupons[couponCode.toUpperCase()];
+    if (coupon) {
+      let discountValue = 0;
+      if (coupon.type === 'percentage') {
+        discountValue = (totalPrice * coupon.value) / 100;
+      } else {
+        discountValue = coupon.value;
+      }
+      setDiscount(discountValue);
+      toast({
+        title: "Coupon Applied!",
+        description: `You've received a discount of ₹${discountValue.toFixed(2)}.`,
+      });
+    } else {
+      setDiscount(0);
+      toast({
+        variant: 'destructive',
+        title: 'Invalid Coupon',
+        description: 'The coupon code you entered is not valid.',
+      });
+    }
+  };
+
+
   const onSubmit = async (data: CheckoutFormValues) => {
     if (!user || !firestore || items.length === 0) return;
 
@@ -93,7 +128,7 @@ export default function CheckoutPage() {
             userId: user.uid,
             createdAt: serverTimestamp(),
             items: items,
-            total: totalWithShipping,
+            total: totalWithDiscount,
         });
 
         await clearCart();
@@ -139,7 +174,7 @@ export default function CheckoutPage() {
             <h1 className="text-3xl font-bold font-headline mb-4">Your Cart is Empty</h1>
             <p className="text-muted-foreground mb-6">You have nothing to check out. Let's find something for you!</p>
             <Button asChild>
-            <Link href="/women">Start Shopping</Link>
+            <Link href="/shops/women">Start Shopping</Link>
             </Button>
         </div>
     )
@@ -206,13 +241,28 @@ export default function CheckoutPage() {
               </Card>
 
               <Button type="submit" className="w-full" size="lg" disabled={isProcessing}>
-                {isProcessing ? 'Processing...' : `Place Order - ₹${totalWithShipping.toFixed(2)}`}
+                {isProcessing ? 'Processing...' : `Place Order - ₹${totalWithDiscount.toFixed(2)}`}
               </Button>
             </form>
           </Form>
         </div>
 
         <div>
+            <Card className="mb-8">
+                 <CardHeader>
+                    <CardTitle>Apply Coupon</CardTitle>
+                 </CardHeader>
+                 <CardContent>
+                    <div className="flex gap-2">
+                        <Input 
+                            placeholder="Enter coupon code" 
+                            value={couponCode}
+                            onChange={(e) => setCouponCode(e.target.value)}
+                        />
+                        <Button onClick={handleApplyCoupon}>Apply</Button>
+                    </div>
+                 </CardContent>
+            </Card>
             <Card>
                 <CardHeader>
                     <CardTitle>Order Summary</CardTitle>
@@ -245,10 +295,16 @@ export default function CheckoutPage() {
                             <span className="text-muted-foreground">Shipping</span>
                             <span>₹{shippingCost.toFixed(2)}</span>
                         </div>
+                        {discount > 0 && (
+                            <div className="flex justify-between text-sm text-green-600">
+                                <span className="text-muted-foreground">Discount</span>
+                                <span>- ₹{discount.toFixed(2)}</span>
+                            </div>
+                        )}
                         <Separator className="my-2" />
                         <div className="flex justify-between font-bold">
                             <span>Total</span>
-                            <span>₹{totalWithShipping.toFixed(2)}</span>
+                            <span>₹{totalWithDiscount.toFixed(2)}</span>
                         </div>
                     </div>
                 </CardContent>
