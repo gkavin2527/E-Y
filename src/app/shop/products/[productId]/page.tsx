@@ -235,7 +235,7 @@ export default function ProductPage() {
                                         "peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground",
                                         isAvailable 
                                             ? "hover:bg-accent hover:text-accent-foreground" 
-                                            : "bg-muted/50 text-muted-foreground/50 cursor-not-allowed opacity-50"
+                                            : "opacity-50 cursor-not-allowed"
                                     )}
                                 >
                                     {size}
