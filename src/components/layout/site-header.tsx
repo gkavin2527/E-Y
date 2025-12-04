@@ -187,7 +187,7 @@ export function SiteHeader() {
             <MainNav />
         </div>
         <div className="flex flex-1 items-center justify-end space-x-1">
-            <ClientOnly>
+            
                 <SearchDialog />
                 <UserButton />
                 <Sheet>
@@ -208,9 +208,10 @@ export function SiteHeader() {
                     <CartSheet />
                   </SheetContent>
                 </Sheet>
-            </ClientOnly>
+            
         </div>
       </div>
     </header>
   );
 }
+
