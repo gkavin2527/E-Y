@@ -20,7 +20,7 @@ export function SiteFooter() {
             <ul className="space-y-2 text-sm">
               <li><Link href="/shops/men" className="text-muted-foreground hover:text-primary">Men</Link></li>
               <li><Link href="/shops/women" className="text-muted-foreground hover:text-primary">Women</Link></li>
-              <li><Link href="/shops/men/accessories" className="text-muted-foreground hover:text-primary">Accessories</Link></li>
+              <li><Link href="/shops/women/accessories" className="text-muted-foreground hover:text-primary">Accessories</Link></li>
             </ul>
           </div>
           
