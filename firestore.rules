@@ -17,9 +17,7 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read, update: if isOwner(userId);
-      allow create: if isSignedIn(); // Allow any signed in user to create their own profile
-      allow delete: if isOwner(userId);
+      allow read, create, update, delete: if isOwner(userId);
       allow list: if isAdmin(); // Only admins can list all users
 
       match /cart/{cartDoc} {
@@ -66,3 +64,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
