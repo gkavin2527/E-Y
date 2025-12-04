@@ -13,7 +13,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const firstImage = product.images?.[0];
-  const isOnSale = product.originalPrice && product.originalPrice > product.price;
+  const isOnSale = typeof product.originalPrice === 'number' && product.originalPrice > product.price;
 
   return (
     <div className="group relative">
@@ -47,7 +47,7 @@ export function ProductCard({ product }: ProductCardProps) {
              <Link href={`/shop/products/${product.id}`}>{product.name}</Link>
           </h3>
           <div className="flex items-baseline gap-2 mt-1">
-            <p className={`font-semibold text-foreground ${isOnSale ? 'text-destructive' : ''}`}>
+            <p className={`font-semibold ${isOnSale ? 'text-destructive' : 'text-foreground'}`}>
               ₹{product.price.toFixed(2)}
             </p>
             {isOnSale && (
@@ -64,3 +64,5 @@ export function ProductCard({ product }: ProductCardProps) {
     </div>
   );
 }
+
+    
