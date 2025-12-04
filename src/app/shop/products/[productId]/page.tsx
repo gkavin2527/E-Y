@@ -4,7 +4,7 @@
 
 import { notFound, useParams } from 'next/navigation';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -82,7 +82,7 @@ export default function ProductPage() {
   const { data: product, isLoading: isProductLoading } = useDoc<Product>(productDocRef);
 
   const relatedProductsQuery = useMemoFirebase(() => {
-    if (!firestore || !product) return null;
+    if (!firestore || !product || !product.category) return null;
     return query(
       collection(firestore, 'products'),
       where('category', '==', product.category),
@@ -208,8 +208,8 @@ export default function ProductPage() {
                 <h1 className="text-3xl font-bold font-headline">{product.name}</h1>
                 <div className="flex items-baseline gap-4">
                     <p className={`text-2xl font-semibold ${isOnSale ? 'text-destructive' : 'text-foreground'}`}>₹{product.price.toFixed(2)}</p>
-                    {isOnSale && (
-                        <p className="text-xl text-muted-foreground line-through">₹{product.originalPrice?.toFixed(2)}</p>
+                    {isOnSale && product.originalPrice && (
+                        <p className="text-xl text-muted-foreground line-through">₹{product.originalPrice.toFixed(2)}</p>
                     )}
                 </div>
                 <ProductRating rating={product.rating} />
@@ -244,9 +244,7 @@ export default function ProductPage() {
                                     className={cn(
                                         "flex h-10 w-10 items-center justify-center rounded-md border text-sm cursor-pointer",
                                         "peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground",
-                                        isAvailable 
-                                            ? "hover:bg-accent hover:text-accent-foreground" 
-                                            : "opacity-50 cursor-not-allowed"
+                                        !isAvailable && "opacity-50 cursor-not-allowed"
                                     )}
                                 >
                                     {size}
@@ -275,6 +273,3 @@ export default function ProductPage() {
     </div>
   );
 }
-
-
-    

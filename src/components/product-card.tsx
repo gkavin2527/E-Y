@@ -17,7 +17,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div className="group relative">
-      <Link href={`/products/${product.id}`}>
+      <Link href={`/shop/products/${product.id}`}>
         <div className="overflow-hidden rounded-lg">
           <div className="relative aspect-[3/4] bg-muted">
             {isOnSale && (
@@ -44,15 +44,15 @@ export function ProductCard({ product }: ProductCardProps) {
       <div className="mt-4 flex justify-between">
         <div>
           <h3 className="font-medium text-sm text-foreground truncate">
-             <Link href={`/products/${product.id}`}>{product.name}</Link>
+             <Link href={`/shop/products/${product.id}`}>{product.name}</Link>
           </h3>
           <div className="flex items-baseline gap-2 mt-1">
             <p className={`font-semibold ${isOnSale ? 'text-destructive' : 'text-foreground'}`}>
               ₹{product.price.toFixed(2)}
             </p>
-            {isOnSale && (
+            {isOnSale && product.originalPrice && (
               <p className="font-semibold text-sm text-muted-foreground line-through">
-                ₹{product.originalPrice?.toFixed(2)}
+                ₹{product.originalPrice.toFixed(2)}
               </p>
             )}
           </div>
@@ -64,7 +64,3 @@ export function ProductCard({ product }: ProductCardProps) {
     </div>
   );
 }
-
-    
-
-    

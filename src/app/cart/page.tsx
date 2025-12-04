@@ -59,7 +59,7 @@ export default function CartPage() {
                                 <div className="ml-4 flex-1 flex flex-col sm:flex-row justify-between">
                                     <div className='mb-4 sm:mb-0'>
                                         <h3 className="font-medium">
-                                            <Link href={`/products/${item.productId}`} className="hover:underline">{item.name}</Link>
+                                            <Link href={`/shop/products/${item.productId}`} className="hover:underline">{item.name}</Link>
                                         </h3>
                                         <p className="text-sm text-muted-foreground">Size: {item.size}</p>
                                         <p className="text-lg font-semibold mt-2">₹{item.price.toFixed(2)}</p>
@@ -112,5 +112,3 @@ export default function CartPage() {
     </div>
   );
 }
-
-    
