@@ -138,7 +138,7 @@ export default function OrdersPage() {
               When you place an order, it will appear here.
             </p>
             <Button asChild>
-              <Link href="/women">Start Shopping</Link>
+              <Link href="/shops/women">Start Shopping</Link>
             </Button>
           </div>
         ) : (
