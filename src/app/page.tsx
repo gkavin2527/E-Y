@@ -127,7 +127,7 @@ export default function Home() {
         </div>
         <div className="text-center mt-8">
           <Button variant="outline" asChild>
-            <Link href="/shop/women/topwear">View All</Link>
+            <Link href="/shop/women">View All</Link>
           </Button>
         </div>
       </section>
