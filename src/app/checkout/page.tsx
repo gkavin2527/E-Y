@@ -22,6 +22,7 @@ import Link from 'next/link';
 import { CheckCircle, Home, Plus, TicketPercent } from 'lucide-react';
 import type { UserProfile, Address } from '@/lib/types';
 import { AddressDialog } from '@/components/account/address-dialog';
+import { cn } from '@/lib/utils';
 
 
 const paymentSchema = z.object({
