@@ -104,14 +104,12 @@ export default function ProductPage() {
   if (isProductLoading) {
     return <ProductPageSkeleton />;
   }
+  
+  if (!isProductLoading && !product) {
+    notFound();
+  }
 
   if (!product) {
-    // This is the correct way to handle not found after loading is complete.
-    // If there's still no product, it's a valid 404.
-    if (!isProductLoading) {
-        notFound();
-    }
-    // Otherwise, we are still loading, so show the skeleton.
     return <ProductPageSkeleton />;
   }
   
@@ -277,7 +275,3 @@ export default function ProductPage() {
     </div>
   );
 }
-
-    
-
-    
