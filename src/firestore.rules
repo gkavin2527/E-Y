@@ -1,8 +1,8 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ---------- Utility Functions ----------
     function isSignedIn() {
       return request.auth != null;
     }
@@ -12,54 +12,73 @@ service cloud.firestore {
     }
     
     function isAdmin() {
-      // Allow if the user's UID is in the admins collection
+      // Validates that a document with the userId exists in /admins
       return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
+    // ---------- USERS ----------
     match /users/{userId} {
-      allow read, update: if isOwner(userId);
-      allow create: if isSignedIn(); // Allow any signed in user to create their own profile
-      allow delete: if isOwner(userId);
-      allow list: if isAdmin(); // Only admins can list all users
+      allow read, update, delete: if isOwner(userId);
+      allow create: if isSignedIn();
+      allow list: if isAdmin(); // Only admins can list users
 
+      // CART
       match /cart/{cartDoc} {
-          allow read, write: if isOwner(userId);
+        allow read, write: if isOwner(userId);
       }
 
+      // ADDRESSES
       match /addresses/{addressId} {
-          allow read, list, create, update, delete: if isOwner(userId);
+        allow read, list, create, update, delete: if isOwner(userId);
       }
     }
 
+    // ---------- PRODUCTS ----------
     match /products/{productId} {
-      allow get, list: if true; // Everyone can view products
-      allow create, update, delete: if isAdmin(); // Only admins can manage products
+      allow get, list: if true; // Public viewing allowed
+      allow create, update, delete: if isAdmin();
 
       match /reviews/{reviewId} {
-        allow list, get: if true; // Everyone can read reviews
-        // Allow create if user is signed in and the review is for them
+        allow get, list: if true;
         allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-        // Users cannot update or delete reviews from the client
         allow update, delete: if false;
       }
     }
-    
+
+    // ---------- ORDERS ----------
     match /orders/{orderId} {
-      // Allow a signed-in user to create an order for themselves
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      // Allow a user to get their own order, or an admin to get any order
+
+      // USERS CAN ONLY CREATE THEIR OWN ORDER
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid;
+
+      // USERS CAN ONLY GET THEIR OWN ORDER, ADMINS GET ALL
       allow get: if (resource.data.userId == request.auth.uid) || isAdmin();
-      // Allow a user to list THEIR OWN orders (by filtering on userId), or an admin to list ALL orders.
-      allow list: if (request.query.get("userId") == request.auth.uid) || isAdmin();
-      // No one can update or delete historical orders
-      allow update, delete: if false;
+
+      // LISTING ORDERS:
+      // - User can ONLY list their own orders (must use query where("userId", "==", uid))
+      // - Admin can list ALL
+      allow list: if 
+        // USER LISTS THEIR OWN ORDERS
+        (
+          isSignedIn()
+          && request.query.where != null
+          && request.query.where.size() == 1
+          && request.query.where[0].field == "userId"
+          && request.query.where[0].op == "=="
+          && request.query.where[0].value == request.auth.uid
+        )
+        ||
+        // ADMIN LISTS ALL
+        isAdmin();
+
+      allow update, delete: if false; // Orders cannot be modified after creation
     }
-    
-    match /admins/{userId} {
-        // Anyone can read the admins collection to check for existence
-        allow read: if true;
-        // But no one can write to it from the client-side
-        allow write: if false;
+
+    // ---------- ADMINS ----------
+    match /admins/{adminId} {
+      allow read: if true; // Anyone can check admin existence
+      allow write: if false; // Prevent client-side edits
     }
   }
 }
