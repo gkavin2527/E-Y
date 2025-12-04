@@ -3,17 +3,16 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -22,6 +21,8 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import Link from 'next/link';
 import { TicketPercent } from 'lucide-react';
+import type { UserProfile } from '@/lib/types';
+
 
 const shippingSchema = z.object({
   fullName: z.string().min(2, { message: "Full name must be at least 2 characters." }),
@@ -60,15 +61,20 @@ export default function CheckoutPage() {
   const [appliedCoupon, setAppliedCoupon] = useState('');
   const [discount, setDiscount] = useState(0);
 
+  const userDocRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
+    [firestore, user]
+  );
+  const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
-      fullName: 'Anaya Sharma',
-      address: '12-B, Lodhi Road',
-      city: 'New Delhi',
-      zipCode: '110003',
-      country: 'India',
+      fullName: '',
+      address: '',
+      city: '',
+      zipCode: '',
+      country: '',
       cardNumber: '',
       expiryDate: '',
       cvc: '',
@@ -86,6 +92,18 @@ export default function CheckoutPage() {
     }
   }, [user, isUserLoading, router, toast]);
 
+  useEffect(() => {
+    if (userProfile) {
+        form.reset({
+            ...form.getValues(),
+            fullName: userProfile.firstName ? `${userProfile.firstName} ${userProfile.lastName || ''}`.trim() : '',
+            address: userProfile.address || '',
+            city: userProfile.city || '',
+            zipCode: userProfile.zipCode || '',
+            country: userProfile.country || '',
+        });
+    }
+  }, [userProfile, form]);
   
   const shippingCost = 5.00;
   const subtotalWithShipping = totalPrice + shippingCost;
@@ -116,10 +134,6 @@ export default function CheckoutPage() {
       });
     }
   }
-
-  const handleApplyCoupon = () => {
-    applyCoupon(couponCode);
-  };
 
   const handleSelectCoupon = (code: string) => {
     setCouponCode(code);
@@ -166,7 +180,7 @@ export default function CheckoutPage() {
     }
   };
 
-  if (isUserLoading || !user) {
+  if (isUserLoading || isProfileLoading || !user) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="grid md:grid-cols-2 gap-12">

@@ -60,4 +60,8 @@ export type UserProfile = {
     lastName: string;
     email: string;
     role: 'customer' | 'admin';
+    address?: string;
+    city?: string;
+    zipCode?: string;
+    country?: string;
 };

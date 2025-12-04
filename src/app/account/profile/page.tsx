@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
@@ -10,13 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
+import type { UserProfile } from '@/lib/types';
 
-type UserProfile = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-};
 
 export default function ProfilePage() {
   const { user, isUserLoading } = useUser();
@@ -24,8 +20,15 @@ export default function ProfilePage() {
   const { toast } = useToast();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [formState, setFormState] = useState<Partial<UserProfile>>({
+    firstName: '',
+    lastName: '',
+    address: '',
+    city: '',
+    zipCode: '',
+    country: '',
+  });
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -41,11 +44,16 @@ export default function ProfilePage() {
         if (docSnap.exists()) {
           const data = docSnap.data() as UserProfile;
           setProfile(data);
-          setFirstName(data.firstName);
-          setLastName(data.lastName);
+          setFormState({
+            firstName: data.firstName || '',
+            lastName: data.lastName || '',
+            address: data.address || '',
+            city: data.city || '',
+            zipCode: data.zipCode || '',
+            country: data.country || '',
+          });
         } else {
             setProfile(null);
-            console.log("No such document!");
         }
         setIsLoading(false);
       }, (error) => {
@@ -64,6 +72,10 @@ export default function ProfilePage() {
     }
   }, [userDocRef, isUserLoading, toast]);
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormState(prevState => ({ ...prevState, [id]: value }));
+  }
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,13 +83,8 @@ export default function ProfilePage() {
     
     setIsSaving(true);
     
-    const updatedData = {
-        firstName: firstName,
-        lastName: lastName,
-    };
-
     try {
-        await updateDoc(userDocRef, updatedData);
+        await updateDoc(userDocRef, formState);
         toast({
             title: "Profile Updated",
             description: "Your profile has been successfully updated.",
@@ -129,7 +136,14 @@ export default function ProfilePage() {
     );
   }
 
-  const hasChanges = profile.firstName !== firstName || profile.lastName !== lastName;
+  const hasChanges = JSON.stringify(formState) !== JSON.stringify({
+    firstName: profile.firstName || '',
+    lastName: profile.lastName || '',
+    address: profile.address || '',
+    city: profile.city || '',
+    zipCode: profile.zipCode || '',
+    country: profile.country || '',
+  });
 
   return (
     <form onSubmit={handleUpdateProfile}>
@@ -137,34 +151,59 @@ export default function ProfilePage() {
         <CardHeader>
           <CardTitle>My Profile</CardTitle>
           <CardDescription>
-            Update your personal information here.
+            Update your personal information and default shipping address.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="first-name">First name</Label>
-              <Input
-                id="first-name"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                disabled={isSaving}
-              />
+        <CardContent className="space-y-6">
+            <div className="space-y-4">
+                <h3 className="font-semibold text-lg">Personal Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                    <Label htmlFor="firstName">First name</Label>
+                    <Input
+                        id="firstName"
+                        value={formState.firstName}
+                        onChange={handleInputChange}
+                        disabled={isSaving}
+                    />
+                    </div>
+                    <div className="space-y-2">
+                    <Label htmlFor="lastName">Last name</Label>
+                    <Input
+                        id="lastName"
+                        value={formState.lastName}
+                        onChange={handleInputChange}
+                        disabled={isSaving}
+                    />
+                    </div>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" value={profile.email} disabled />
+                </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="last-name">Last name</Label>
-              <Input
-                id="last-name"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                disabled={isSaving}
-              />
+            <Separator />
+            <div className="space-y-4">
+                 <h3 className="font-semibold text-lg">Default Shipping Address</h3>
+                <div className="space-y-2">
+                    <Label htmlFor="address">Address</Label>
+                    <Input id="address" value={formState.address} onChange={handleInputChange} disabled={isSaving} />
+                </div>
+                <div className="grid sm:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="city">City</Label>
+                        <Input id="city" value={formState.city} onChange={handleInputChange} disabled={isSaving} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="zipCode">ZIP Code</Label>
+                        <Input id="zipCode" value={formState.zipCode} onChange={handleInputChange} disabled={isSaving} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="country">Country</Label>
+                        <Input id="country" value={formState.country} onChange={handleInputChange} disabled={isSaving} />
+                    </div>
+                </div>
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={profile.email} disabled />
-          </div>
         </CardContent>
         <CardFooter>
           <Button type="submit" disabled={isSaving || !hasChanges}>

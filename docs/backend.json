@@ -121,7 +121,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "UserProfile",
       "type": "object",
-      "description": "Represents a user profile.",
+      "description": "Represents a user profile, including their default shipping address.",
       "properties": {
         "id": {
           "type": "string",
@@ -143,6 +143,22 @@
         "role": {
             "type": "string",
             "enum": ["customer", "admin"]
+        },
+        "address": {
+          "type": "string",
+          "description": "Default shipping address line."
+        },
+        "city": {
+          "type": "string",
+          "description": "Default shipping city."
+        },
+        "zipCode": {
+          "type": "string",
+          "description": "Default shipping ZIP or postal code."
+        },
+        "country": {
+          "type": "string",
+          "description": "Default shipping country."
         }
       },
       "required": [
