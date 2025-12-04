@@ -1,3 +1,4 @@
+
 export type Product = {
   id: string;
   name: string;
@@ -54,14 +55,20 @@ export type Order = {
   items: OrderItem[];
 };
 
+export type Address = {
+    id: string;
+    fullName: string;
+    address: string;
+    city: string;
+    zipCode: string;
+    country: string;
+}
+
 export type UserProfile = {
     id: string;
     firstName: string;
     lastName: string;
     email: string;
     role: 'customer' | 'admin';
-    address?: string;
-    city?: string;
-    zipCode?: string;
-    country?: string;
+    defaultAddressId?: string;
 };

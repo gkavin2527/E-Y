@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Product": {
@@ -73,7 +74,7 @@
       ]
     },
     "Category": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$schema": "http://json-schema.org/draft-07_schema#",
       "title": "Category",
       "type": "object",
       "description": "Represents a product category.",
@@ -98,7 +99,7 @@
       ]
     },
     "Section": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$schema": "http://json-schema.org/draft-07_schema#",
       "title": "Section",
       "type": "object",
       "description": "Represents a section of the store (e.g., Men, Women).",
@@ -117,8 +118,36 @@
         "name"
       ]
     },
+     "Address": {
+      "title": "Address",
+      "type": "object",
+      "description": "Represents a user's shipping address.",
+      "properties": {
+        "fullName": {
+          "type": "string",
+          "description": "Recipient's full name."
+        },
+        "address": {
+          "type": "string",
+          "description": "Street address."
+        },
+        "city": {
+          "type": "string",
+          "description": "City."
+        },
+        "zipCode": {
+          "type": "string",
+          "description": "ZIP or postal code."
+        },
+        "country": {
+          "type": "string",
+          "description": "Country."
+        }
+      },
+      "required": ["fullName", "address", "city", "zipCode", "country"]
+    },
     "UserProfile": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$schema": "http://json-schema.org/draft-07_schema#",
       "title": "UserProfile",
       "type": "object",
       "description": "Represents a user profile, including their default shipping address.",
@@ -144,21 +173,9 @@
             "type": "string",
             "enum": ["customer", "admin"]
         },
-        "address": {
+        "defaultAddressId": {
           "type": "string",
-          "description": "Default shipping address line."
-        },
-        "city": {
-          "type": "string",
-          "description": "Default shipping city."
-        },
-        "zipCode": {
-          "type": "string",
-          "description": "Default shipping ZIP or postal code."
-        },
-        "country": {
-          "type": "string",
-          "description": "Default shipping country."
+          "description": "The ID of the user's default address from the addresses subcollection."
         }
       },
       "required": [
@@ -192,7 +209,7 @@
       ]
     },
     "Cart": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$schema": "http://json-schema.org/draft-07_schema#",
       "title": "Cart",
       "type": "object",
       "description": "Represents a shopping cart for a user.",
@@ -277,13 +294,18 @@
           "items": {
             "$ref": "#/entities/OrderItem"
           }
+        },
+        "shippingAddress": {
+            "$ref": "#/entities/Address",
+            "description": "The shipping address used for this order."
         }
       },
       "required": [
         "userId",
         "createdAt",
         "total",
-        "items"
+        "items",
+        "shippingAddress"
       ]
     }
   },
@@ -360,6 +382,18 @@
               "name": "userId",
               "description": "Unique identifier for the user. This must match the Firebase Auth UID."
             }
+          ]
+        }
+      },
+       {
+        "path": "users/{userId}/addresses/{addressId}",
+        "definition": {
+          "entityName": "Address",
+          "schema": { "$ref": "#/entities/Address" },
+          "description": "A user's saved shipping addresses.",
+          "params": [
+            { "name": "userId", "description": "The user's ID." },
+            { "name": "addressId", "description": "The address's unique ID." }
           ]
         }
       },

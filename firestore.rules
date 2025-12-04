@@ -25,6 +25,10 @@ service cloud.firestore {
       match /cart/{cartDoc} {
           allow read, write: if isOwner(userId);
       }
+
+      match /addresses/{addressId} {
+          allow read, list, create, update, delete: if isOwner(userId);
+      }
     }
 
     match /products/{productId} {

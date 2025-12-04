@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { useCart } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
@@ -17,20 +17,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Separator } from '@/components/ui/separator';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import Link from 'next/link';
-import { TicketPercent } from 'lucide-react';
-import type { UserProfile } from '@/lib/types';
+import { CheckCircle, Home, Plus, TicketPercent } from 'lucide-react';
+import type { UserProfile, Address } from '@/lib/types';
+import { AddressDialog } from '@/components/account/address-dialog';
 
-
-const shippingSchema = z.object({
-  fullName: z.string().min(2, { message: "Full name must be at least 2 characters." }),
-  address: z.string().min(5, { message: "Address must be at least 5 characters." }),
-  city: z.string().min(2, { message: "City must be at least 2 characters." }),
-  zipCode: z.string().min(5, { message: "A 5-digit ZIP code is required." }),
-  country: z.string().min(2, { message: "Country is required." }),
-});
 
 const paymentSchema = z.object({
     cardNumber: z.string().regex(/^\d{16}$/, 'Card number must be 16 digits.'),
@@ -38,9 +30,7 @@ const paymentSchema = z.object({
     cvc: z.string().regex(/^\d{3,4}$/, 'CVC must be 3 or 4 digits.'),
 });
 
-const checkoutSchema = shippingSchema.merge(paymentSchema);
-
-type CheckoutFormValues = z.infer<typeof checkoutSchema>;
+type PaymentFormValues = z.infer<typeof paymentSchema>;
 
 // Mock coupon data
 const validCoupons: Record<string, { description: string, type: 'percentage' | 'flat'; value: number }> = {
@@ -50,16 +40,37 @@ const validCoupons: Record<string, { description: string, type: 'percentage' | '
     'FLAT50': { description: "Get flat ₹50 off", type: 'flat', value: 50 },
 };
 
+function CheckoutSkeleton() {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid lg:grid-cols-2 gap-12">
+            <div className="space-y-8">
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-64 w-full" />
+            </div>
+            <div className="space-y-8">
+                <Skeleton className="h-40 w-full" />
+                <Skeleton className="h-64 w-full" />
+            </div>
+        </div>
+      </div>
+    );
+}
+
 export default function CheckoutPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
   const { items, totalPrice, totalItems, clearCart } = useCart();
   const { toast } = useToast();
+  
   const [isProcessing, setIsProcessing] = useState(false);
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState('');
   const [discount, setDiscount] = useState(0);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
+
 
   const userDocRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'users', user.uid) : null),
@@ -67,43 +78,32 @@ export default function CheckoutPage() {
   );
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<UserProfile>(userDocRef);
 
-  const form = useForm<CheckoutFormValues>({
-    resolver: zodResolver(checkoutSchema),
-    defaultValues: {
-      fullName: '',
-      address: '',
-      city: '',
-      zipCode: '',
-      country: '',
-      cardNumber: '',
-      expiryDate: '',
-      cvc: '',
-    },
+  const addressesCollectionRef = useMemoFirebase(
+    () => (firestore && user ? collection(firestore, 'users', user.uid, 'addresses') : null),
+    [firestore, user]
+  );
+  const { data: addresses, isLoading: areAddressesLoading } = useCollection<Address>(addressesCollectionRef);
+
+
+  const paymentForm = useForm<PaymentFormValues>({
+    resolver: zodResolver(paymentSchema),
+    defaultValues: { cardNumber: '', expiryDate: '', cvc: '' },
   });
 
   useEffect(() => {
     if (!isUserLoading && !user) {
-      toast({
-        title: 'Authentication Required',
-        description: 'Please log in to proceed to checkout.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Authentication Required', description: 'Please log in to proceed to checkout.', variant: 'destructive' });
       router.push('/login?redirect=/checkout');
     }
   }, [user, isUserLoading, router, toast]);
 
   useEffect(() => {
-    if (userProfile) {
-        form.reset({
-            ...form.getValues(),
-            fullName: userProfile.firstName ? `${userProfile.firstName} ${userProfile.lastName || ''}`.trim() : '',
-            address: userProfile.address || '',
-            city: userProfile.city || '',
-            zipCode: userProfile.zipCode || '',
-            country: userProfile.country || '',
-        });
+    if (userProfile?.defaultAddressId) {
+      setSelectedAddressId(userProfile.defaultAddressId);
+    } else if (addresses && addresses.length > 0) {
+      setSelectedAddressId(addresses[0].id);
     }
-  }, [userProfile, form]);
+  }, [userProfile, addresses]);
   
   const shippingCost = 5.00;
   const subtotalWithShipping = totalPrice + shippingCost;
@@ -120,18 +120,11 @@ export default function CheckoutPage() {
       }
       setDiscount(discountValue);
       setAppliedCoupon(code.toUpperCase());
-      toast({
-        title: "Coupon Applied!",
-        description: `You've received a discount of ₹${discountValue.toFixed(2)}.`,
-      });
+      toast({ title: "Coupon Applied!", description: `You've received a discount of ₹${discountValue.toFixed(2)}.` });
     } else {
       setDiscount(0);
       setAppliedCoupon('');
-      toast({
-        variant: 'destructive',
-        title: 'Invalid Coupon',
-        description: 'The coupon code you entered is not valid.',
-      });
+      toast({ variant: 'destructive', title: 'Invalid Coupon', description: 'The coupon code you entered is not valid.' });
     }
   }
 
@@ -140,140 +133,119 @@ export default function CheckoutPage() {
     applyCoupon(code);
   }
 
-
-  const onSubmit = async (data: CheckoutFormValues) => {
-    if (!user || !firestore || items.length === 0) return;
+  const onSubmit = async (data: PaymentFormValues) => {
+    if (!user || !firestore || items.length === 0 || !selectedAddressId) {
+        if (!selectedAddressId) {
+            toast({ variant: 'destructive', title: "No Address Selected", description: "Please select or add a shipping address." });
+        }
+        return;
+    }
 
     setIsProcessing(true);
-    toast({
-        title: "Processing Order...",
-        description: "Please wait while we finalize your order.",
-    });
+    toast({ title: "Processing Order...", description: "Please wait while we finalize your order." });
 
     try {
-        const ordersCollectionRef = collection(firestore, 'orders');
-        
-        await addDoc(ordersCollectionRef, {
+        await addDoc(collection(firestore, 'orders'), {
             userId: user.uid,
             createdAt: serverTimestamp(),
             items: items,
             total: totalWithDiscount,
+            shippingAddress: addresses?.find(a => a.id === selectedAddressId),
         });
 
         await clearCart();
-
-        toast({
-            title: "Order Placed Successfully!",
-            description: "Thank you for your purchase. A confirmation has been sent to your email.",
-        });
+        toast({ title: "Order Placed Successfully!", description: "Thank you for your purchase." });
         router.push('/account/orders');
 
     } catch (error) {
-        console.error("Error placing order: ", error);
-        toast({
-            variant: "destructive",
-            title: "Order Failed",
-            description: "There was a problem placing your order. Please try again.",
-        });
+        toast({ variant: "destructive", title: "Order Failed", description: "There was a problem placing your order." });
     } finally {
         setIsProcessing(false);
     }
   };
 
-  if (isUserLoading || isProfileLoading || !user) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid md:grid-cols-2 gap-12">
-            <div>
-                <Skeleton className="h-8 w-1/2 mb-6" />
-                <Skeleton className="h-96 w-full" />
-            </div>
-            <div>
-                <Skeleton className="h-8 w-1/3 mb-6" />
-                <Skeleton className="h-64 w-full" />
-            </div>
-        </div>
-      </div>
-    );
+  const isLoading = isUserLoading || isProfileLoading || areAddressesLoading;
+
+  if (isLoading || !user) {
+    return <CheckoutSkeleton />;
   }
 
   if (totalItems === 0 && !isProcessing) {
     return (
         <div className="container mx-auto px-4 py-16 text-center">
             <h1 className="text-3xl font-bold font-headline mb-4">Your Cart is Empty</h1>
-            <p className="text-muted-foreground mb-6">You have nothing to check out. Let's find something for you!</p>
-            <Button asChild>
-            <Link href="/shops/women">Start Shopping</Link>
-            </Button>
+            <p className="text-muted-foreground mb-6">Let's find something for you!</p>
+            <Button asChild><Link href="/shops/women">Start Shopping</Link></Button>
         </div>
     )
   }
 
   return (
+    <>
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold font-headline mb-8">Checkout</h1>
       <div className="grid lg:grid-cols-2 gap-12">
-        <div>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Shipping Address</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField control={form.control} name="fullName" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl><Input placeholder="John Doe" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                   <FormField control={form.control} name="address" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Address</FormLabel>
-                      <FormControl><Input placeholder="123 Main St" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <div className="grid sm:grid-cols-3 gap-4">
-                    <FormField control={form.control} name="city" render={({ field }) => (
-                        <FormItem className="sm:col-span-1"><FormLabel>City</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="zipCode" render={({ field }) => (
-                        <FormItem className="sm:col-span-1"><FormLabel>ZIP Code</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                     <FormField control={form.control} name="country" render={({ field }) => (
-                        <FormItem className="sm:col-span-1"><FormLabel>Country</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                  </div>
-                </CardContent>
-              </Card>
+        <div className="space-y-8">
+            <Card>
+                 <CardHeader className="flex-row items-center justify-between">
+                    <div>
+                        <CardTitle>Shipping Address</CardTitle>
+                        <CardDescription>Select where to ship your order.</CardDescription>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => setIsAddressDialogOpen(true)}><Plus className="h-4 w-4 mr-2" /> New Address</Button>
+                 </CardHeader>
+                 <CardContent className="space-y-4">
+                    {addresses && addresses.length > 0 ? (
+                        <div className="grid sm:grid-cols-2 gap-4">
+                            {addresses.map(address => (
+                                <div key={address.id} onClick={() => setSelectedAddressId(address.id)} className={cn("p-4 rounded-lg border cursor-pointer relative", selectedAddressId === address.id ? "border-primary ring-2 ring-primary" : "hover:bg-muted/50")}>
+                                    {selectedAddressId === address.id && (
+                                        <CheckCircle className="h-5 w-5 text-primary absolute top-2 right-2" />
+                                    )}
+                                     <div className="font-semibold">{address.fullName}</div>
+                                     <p className="text-sm text-muted-foreground mt-1">
+                                        {address.address}, {address.city}, {address.zipCode}
+                                     </p>
+                                     {userProfile?.defaultAddressId === address.id && <div className="text-xs font-medium text-muted-foreground mt-2 flex items-center gap-1"><Home className="h-3 w-3" /> Default</div>}
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-8 border-2 border-dashed rounded-lg">
+                            <p className="text-muted-foreground">You have no saved addresses.</p>
+                            <Button variant="link" onClick={() => setIsAddressDialogOpen(true)}>Add a shipping address</Button>
+                        </div>
+                    )}
+                 </CardContent>
+            </Card>
 
               <Card>
                 <CardHeader>
                     <CardTitle>Payment Details</CardTitle>
                     <CardDescription>All transactions are secure and encrypted.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    <FormField control={form.control} name="cardNumber" render={({ field }) => (
-                        <FormItem><FormLabel>Card Number</FormLabel><FormControl><Input placeholder="0000 0000 0000 0000" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                     <div className="grid grid-cols-2 gap-4">
-                        <FormField control={form.control} name="expiryDate" render={({ field }) => (
-                            <FormItem><FormLabel>Expiry Date</FormLabel><FormControl><Input placeholder="MM/YY" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                         <FormField control={form.control} name="cvc" render={({ field }) => (
-                            <FormItem><FormLabel>CVC</FormLabel><FormControl><Input placeholder="123" {...field} /></FormControl><FormMessage /></FormItem>
-                        )} />
-                    </div>
-                </CardContent>
+                 <CardContent>
+                    <Form {...paymentForm}>
+                        <form id="payment-form" onSubmit={paymentForm.handleSubmit(onSubmit)} className="space-y-4">
+                             <FormField control={paymentForm.control} name="cardNumber" render={({ field }) => (
+                                <FormItem><FormLabel>Card Number</FormLabel><FormControl><Input placeholder="0000 0000 0000 0000" {...field} /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <div className="grid grid-cols-2 gap-4">
+                                <FormField control={paymentForm.control} name="expiryDate" render={({ field }) => (
+                                    <FormItem><FormLabel>Expiry Date</FormLabel><FormControl><Input placeholder="MM/YY" {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                                <FormField control={paymentForm.control} name="cvc" render={({ field }) => (
+                                    <FormItem><FormLabel>CVC</FormLabel><FormControl><Input placeholder="123" {...field} /></FormControl><FormMessage /></FormItem>
+                                )} />
+                            </div>
+                        </form>
+                    </Form>
+                 </CardContent>
               </Card>
 
-              <Button type="submit" className="w-full" size="lg" disabled={isProcessing}>
+              <Button type="submit" form="payment-form" className="w-full" size="lg" disabled={isProcessing}>
                 {isProcessing ? 'Processing...' : `Place Order - ₹${totalWithDiscount.toFixed(2)}`}
               </Button>
-            </form>
-          </Form>
         </div>
 
         <div className='space-y-8'>
@@ -309,11 +281,10 @@ export default function CheckoutPage() {
                 <CardContent>
                     <div className="space-y-4">
                         {items.map(item => {
-                             const productImage = PlaceHolderImages.find((p) => p.id === item.image);
                             return (
                                 <div key={item.id} className="flex items-center gap-4">
                                     <div className="relative h-16 w-16 rounded-md overflow-hidden border">
-                                        {productImage && <Image src={productImage.imageUrl} alt={item.name} fill className="object-cover" />}
+                                        {item.image && <Image src={item.image} alt={item.name} fill className="object-cover" />}
                                     </div>
                                     <div className="flex-1">
                                         <p className="font-medium text-sm">{item.name}</p>
@@ -351,5 +322,11 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+     <AddressDialog 
+        isOpen={isAddressDialogOpen}
+        setIsOpen={setIsAddressDialogOpen}
+        userId={user?.uid}
+    />
+    </>
   );
 }
