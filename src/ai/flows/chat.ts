@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow for handling chat conversations with the Gemini model.
@@ -7,7 +8,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { generate } from 'genkit/ai';
+import { generate } from 'genkit';
 
 // Define the schema for a single chat message
 export const ChatMessageSchema = z.object({
