@@ -18,7 +18,8 @@ service cloud.firestore {
 
     // ---------- USERS ----------
     match /users/{userId} {
-      allow read, create, update, delete: if isOwner(userId);
+      allow read, update, delete: if isOwner(userId);
+      allow create: if request.auth.uid == userId;
       allow list: if isAdmin();
 
       match /cart/{cartDoc} {
@@ -50,13 +51,12 @@ service cloud.firestore {
       allow create: if isSignedIn() &&
         request.resource.data.userId == request.auth.uid;
 
-      // User can read their own orders; admin can read all
+      // User can read their own orders; admin can read any
       allow get: if (resource.data.userId == request.auth.uid) || isAdmin();
 
-      // LIST:
-      // Firestore does NOT pass query filters to rules, so we cannot check userId here.
-      // We allow list for all signed-in users, but "get" rule still restricts documents.
-      allow list: if isAdmin() || isSignedIn();
+      // An admin can list all orders.
+      // A user can list orders if they are querying for their own orders.
+      allow list: if isAdmin() || (isSignedIn() && request.query.get("userId") == request.auth.uid);
 
       allow update, delete: if false;
     }
@@ -64,7 +64,7 @@ service cloud.firestore {
     // ---------- ADMINS ----------
     match /admins/{userId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if false; // Admins are managed manually in Firestore console
     }
   }
 }

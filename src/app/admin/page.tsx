@@ -55,15 +55,15 @@ export default function Dashboard() {
   const firestore = useFirestore();
 
   const ordersQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'orders') : null),
+    () => (firestore ? query(collection(firestore, 'orders')) : null),
     [firestore]
   );
   const productsQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'products') : null),
+    () => (firestore ? query(collection(firestore, 'products')) : null),
     [firestore]
   );
   const usersQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'users') : null),
+    () => (firestore ? query(collection(firestore, 'users')) : null),
     [firestore]
   );
 
