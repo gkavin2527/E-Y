@@ -42,15 +42,6 @@ export default function RootLayout({
               <SiteFooter />
             </div>
             <Toaster />
-            <Link href="/chatbot" passHref>
-              <Button
-                variant="default"
-                className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg z-50 flex items-center justify-center"
-                aria-label="Open Chatbot"
-              >
-                <Bot className="h-8 w-8" />
-              </Button>
-            </Link>
           </CartProvider>
         </FirebaseClientProvider>
         <Script id="razorpay-checkout-js" src="https://checkout.razorpay.com/v1/checkout.js" />
@@ -58,7 +49,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-    
-
-    

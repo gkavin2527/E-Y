@@ -14,7 +14,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ReviewDialog } from '@/components/product/review-dialog';
-import { StyleDialog } from '@/components/product/style-dialog';
 import { useToast } from '@/hooks/use-toast';
 import type { OrderItem } from '@/lib/types';
 
@@ -42,7 +41,6 @@ export default function OrdersPage() {
     const { toast } = useToast();
 
     const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
-    const [isStyleDialogOpen, setIsStyleDialogOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState<OrderItem | null>(null);
 
     const ordersQuery = useMemoFirebase(
@@ -56,11 +54,6 @@ export default function OrdersPage() {
         setSelectedItem(item);
         setIsReviewDialogOpen(true);
     };
-
-    const handleStyleItemClick = (item: OrderItem) => {
-        setSelectedItem(item);
-        setIsStyleDialogOpen(true);
-    }
 
     const handleReviewSubmit = async (rating: number, comment: string): Promise<boolean> => {
         if (!firestore || !user || !selectedItem) {
@@ -119,7 +112,7 @@ export default function OrdersPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>My Orders</CardTitle>
-                    <CardDescription>View your order history and get styling advice.</CardDescription>
+                    <CardDescription>View your order history and write reviews.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {orders && orders.length > 0 ? (
@@ -154,7 +147,6 @@ export default function OrdersPage() {
                                                         </div>
                                                         <div className="flex flex-col gap-2">
                                                             <Button variant="outline" size="sm" onClick={() => handleWriteReviewClick(item)}>Write a Review</Button>
-                                                            <Button variant="secondary" size="sm" onClick={() => handleStyleItemClick(item)}>Style this Item</Button>
                                                         </div>
                                                     </div>
                                                     {index < order.items.length - 1 && <Separator className="mt-4" />}
@@ -184,14 +176,6 @@ export default function OrdersPage() {
                     productImage={selectedItem.image}
                     onSubmit={handleReviewSubmit}
                  />
-            )}
-            {selectedItem && (
-                <StyleDialog
-                    isOpen={isStyleDialogOpen}
-                    setIsOpen={setIsStyleDialogOpen}
-                    productName={selectedItem.name}
-                    productImage={selectedItem.image}
-                />
             )}
         </>
     );

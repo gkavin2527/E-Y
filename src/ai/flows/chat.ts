@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A Genkit flow for handling chat conversations with the Gemini model.
@@ -11,59 +12,6 @@ import type { ChatMessage } from './types';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { getSdks } from '@/firebase';
 import type { Product } from '@/lib/types';
-
-
-// Define a tool for searching products
-const productSearch = ai.defineTool(
-  {
-    name: 'productSearch',
-    description: 'Search for products in the store catalog based on a query.',
-    inputSchema: z.object({
-      query: z.string().describe('The user\'s search query for products.'),
-    }),
-    outputSchema: z.array(
-      z.object({
-        id: z.string(),
-        name: z.string(),
-        price: z.number(),
-        category: z.string(),
-        gender: z.string(),
-      })
-    ),
-  },
-  async ({ query: searchQuery }) => {
-    console.log(`Tool called: productSearch with query: ${searchQuery}`);
-    // This is a server-side flow, so we can initialize a temporary
-    // Firebase instance to query the database.
-    const { firestore } = getSdks();
-    const productsRef = collection(firestore, 'products');
-
-    // Simple search: case-insensitive match on name.
-    // For a real app, a more robust search service like Algolia is recommended.
-    const q = query(
-      productsRef,
-      where('name', '>=', searchQuery),
-      where('name', '<=', searchQuery + '\uf8ff')
-    );
-    
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) {
-      return [];
-    }
-
-    const products = snapshot.docs.map(doc => {
-        const data = doc.data() as Product;
-        return {
-            id: doc.id,
-            name: data.name,
-            price: data.price,
-            category: data.category || 'unknown',
-            gender: data.gender
-        }
-    })
-    return products;
-  }
-);
 
 
 // Define the schema for the chat flow input
@@ -104,7 +52,6 @@ const chatFlow = ai.defineFlow(
         role: msg.role,
         content: [{ text: msg.content }],
       })),
-      tools: [productSearch], // Make the product search tool available to the model
     });
 
     // Check if response exists and has text content
