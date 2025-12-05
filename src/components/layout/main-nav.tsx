@@ -11,7 +11,6 @@ export function MainNav() {
   const navLinks = [
     { href: '/shops/men', label: 'Men' },
     { href: '/shops/women', label: 'Women' },
-    { href: '/ai-stylist', label: 'AI Stylist' },
   ];
 
   return (
