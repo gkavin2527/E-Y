@@ -40,45 +40,49 @@ const generateStyledImageFlow = ai.defineFlow(
     outputSchema: GenerateStyledImageOutputSchema,
   },
   async ({ product }) => {
-    // const { name, description, category, gender, images } = product;
-    // const productImageUrl = images[0]; 
+    const { name, description, category, gender, images } = product;
+    const productImageUrl = images[0]; 
 
-    // // Construct a detailed prompt for the image generation model
-    // const prompt = `
-    //   Generate a high-quality, photorealistic image for an e-commerce website.
-    //   The image should feature a ${gender === 'men' ? 'male' : 'female'} model wearing the following clothing item:
-    //   - Product Name: ${name}
-    //   - Category: ${category || 'clothing'}
-    //   - Description: ${description}
+    // Construct a detailed prompt for the image generation model
+    const prompt = `
+      Generate a high-quality, photorealistic image for an e-commerce website.
+      The image should feature a ${gender === 'men' ? 'male' : 'female'} model wearing the following clothing item:
+      - Product Name: ${name}
+      - Category: ${category || 'clothing'}
+      - Description: ${description}
 
-    //   The model should be styled in a full outfit that complements the product.
-    //   The setting should be a clean, modern, and aesthetically pleasing environment (e.g., a studio with soft lighting, a minimalist urban setting, or a beautiful natural landscape that fits the clothing style).
-    //   The overall mood should be fashionable, chic, and inspiring.
-    //   Ensure the product is clearly visible and is the main focus of the image.
+      The model should be styled in a full outfit that complements the product.
+      The setting should be a clean, modern, and aesthetically pleasing environment (e.g., a studio with soft lighting, a minimalist urban setting, or a beautiful natural landscape that fits the clothing style).
+      The overall mood should be fashionable, chic, and inspiring.
+      Ensure the product is clearly visible and is the main focus of the image.
 
-    //   Use the following image as a reference for the product's appearance:
-    // `;
+      Use the following image as a reference for the product's appearance:
+    `;
 
-    // // Use a powerful image generation model like Imagen 2 or Gemini Pro Vision
-    // const { media } = await ai.generate({
-    //   model: 'googleai/gemini-2.5-flash-image-preview',
-    //   prompt: [
-    //     { media: { url: productImageUrl } },
-    //     { text: prompt },
-    //   ],
-    //   config: {
-    //     // responseModalities is deprecated and should not be used for gemini-2.5-flash-image-preview
-    //   },
-    // });
+    // The following call is commented out to prevent "Quota Exceeded" errors on the free tier.
+    // To re-enable this feature, you will need a paid Google AI plan. Once you have that,
+    // you can uncomment this block.
+    /*
+    const { media } = await ai.generate({
+      model: 'googleai/gemini-2.5-flash-image-preview',
+      prompt: [
+        { media: { url: productImageUrl } },
+        { text: prompt },
+      ],
+      config: {
+        // responseModalities is deprecated and should not be used for gemini-2.5-flash-image-preview
+      },
+    });
 
-    // if (!media) {
-    //   throw new Error('Image generation failed to produce media.');
-    // }
+    if (!media) {
+      throw new Error('Image generation failed to produce media.');
+    }
 
     // Return the image data URI
-    // return { media: media.url };
+    return { media: media.url };
+    */
     
-    // Return a placeholder to avoid hitting rate limits on the free tier.
-    return { media: 'https://picsum.photos/seed/ai-stylist/600/800' };
+    // Return a more appropriate placeholder to avoid API errors on the free tier.
+    return { media: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=600&q=80' };
   }
 );
