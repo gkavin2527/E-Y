@@ -67,7 +67,7 @@ const generateStyledImageFlow = ai.defineFlow(
         { text: prompt },
       ],
       config: {
-        responseModalities: ['IMAGE'], // Specify that the response should include an image
+        // responseModalities is deprecated and should not be used for gemini-2.5-flash-image-preview
       },
     });
 
