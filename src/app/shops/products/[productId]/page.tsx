@@ -19,13 +19,14 @@ import Link from 'next/link';
 import { Star } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 function StarRating({ rating, size = 'md' }: { rating: number, size?: 'sm' | 'md' | 'lg' }) {
     const starSize = { sm: 'h-4 w-4', md: 'h-5 w-5', lg: 'h-6 w-6' }[size];
     return (
         <div className="flex items-center">
             {[...Array(5)].map((_, i) => (
-                <Star key={i} className={`${starSize} ${i < Math.round(rating) ? 'text-primary fill-primary' : 'text-muted-foreground/50'}`} />
+                <Star key={i} className={cn(`${starSize}`, i < Math.round(rating) ? 'text-primary fill-primary' : 'text-muted-foreground/50')} />
             ))}
         </div>
     );
@@ -135,11 +136,23 @@ export default function ProductPage() {
       <div className="container mx-auto px-4 py-8">
           <Breadcrumb className="mb-8">
             <BreadcrumbList>
-                <BreadcrumbItem><Link href="/">Home</Link></BreadcrumbItem>
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link href="/">Home</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
                 <BreadcrumbSeparator />
-                <BreadcrumbItem><Link href={`/shops/${breadcrumbGender}`}>{product.gender}</Link></BreadcrumbItem>
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link href={`/shops/${breadcrumbGender}`}>{product.gender}</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
                 <BreadcrumbSeparator />
-                <BreadcrumbItem><Link href={`/shops/${breadcrumbGender}/${breadcrumbCategory}`}>{product.category}</Link></BreadcrumbItem>
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link href={`/shops/${breadcrumbGender}/${breadcrumbCategory}`}>{product.category}</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem><BreadcrumbPage>{product.name}</BreadcrumbPage></BreadcrumbItem>
             </BreadcrumbList>
@@ -164,7 +177,7 @@ export default function ProductPage() {
                     <button
                         key={index}
                         onClick={() => setMainImage(imgSrc)}
-                        className={`aspect-square overflow-hidden rounded-md border-2 ${mainImage === imgSrc ? 'border-primary' : 'border-transparent'}`}
+                        className={cn('aspect-square overflow-hidden rounded-md border-2', mainImage === imgSrc ? 'border-primary' : 'border-transparent')}
                     >
                          <Image
                             src={imgSrc}
@@ -255,7 +268,7 @@ export default function ProductPage() {
                                 <div className="flex items-center justify-between">
                                     <h3 className="font-semibold">{review.userName}</h3>
                                     <span className="text-xs text-muted-foreground">
-                                        {new Date(review.createdAt.seconds * 1000).toLocaleDateString()}
+                                        {format(new Date(review.createdAt.seconds * 1000), 'MMMM d, yyyy')}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2 mt-1">
