@@ -8,7 +8,6 @@ import { User, FileText } from 'lucide-react';
 
 const accountNavLinks = [
   { href: '/account/profile', label: 'Profile', icon: User },
-  { href: '/account/orders', label: 'My Orders', icon: FileText },
 ];
 
 export default function AccountLayout({
