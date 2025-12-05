@@ -82,7 +82,11 @@ const generateStyledImageFlow = ai.defineFlow(
     return { media: media.url };
     */
     
-    // Return a more appropriate placeholder to avoid API errors on the free tier.
-    return { media: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=600&q=80' };
+    // Return a gender-appropriate placeholder to avoid API errors on the free tier.
+    const placeholderUrl = gender === 'men' 
+      ? 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600&q=80' // Male model placeholder
+      : 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=600&q=80'; // Female model placeholder
+    
+    return { media: placeholderUrl };
   }
 );
